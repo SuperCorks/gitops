@@ -1,0 +1,39 @@
+{
+  "name": "git-promote",
+  "version": "1.0.0",
+  "description": "Safely promote changes from develop to main using fast-forward-only merges to maintain a clean Git history.",
+  "homepage": "https://github.com/SuperCorks/git-promote#readme",
+  "bugs": {
+    "url": "https://github.com/SuperCorks/git-promote/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SuperCorks/git-promote.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "build/index.js",
+  "bin": {
+    "git-promote": "build/index.js"
+  },
+  "files": [
+    "build"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "test": "echo \"Error: This repo has not tests.\" && exit 1"
+  },
+  "devDependencies": {
+    "typescript": "5.8.3",
+    "@types/node": "24.1.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": [
+    "git",
+    "cli"
+  ]
+}
