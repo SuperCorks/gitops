@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { execSync } from "child_process";
 
 // This script helps promote changes from develop to main branch using --ff-only.

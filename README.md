@@ -4,16 +4,27 @@ Safely promote changes from develop to main using fast-forward-only merges to ma
 
 ## Installation
 
+### Using npx
+
 You can use this tool without installing it via npx:
 
 ```bash
-npx git-promote
+npx @supercorks/git-promote@latest
 ```
 
-Or install it globally:
+### Setting up a Git Alias
+
+For convenient access, you can set up a Git alias to run the command:
 
 ```bash
-npm install -g git-promote
+# Add the alias to your global Git config
+git config --global alias.promote '!npx @supercorks/git-promote@latest'
+```
+
+Then you can simply use:
+
+```bash
+git promote
 ```
 
 ## Usage
@@ -25,10 +36,11 @@ npm install -g git-promote
 
 2. Run the git-promote command:
    ```bash
-   git-promote
+   git promote
    ```
 
 The tool will:
+
 - Verify you're on the develop branch
 - Update both develop and main branches
 - Ensure develop is up-to-date with main

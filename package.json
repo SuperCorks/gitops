@@ -1,6 +1,6 @@
 {
-  "name": "git-promote",
-  "version": "1.0.0",
+  "name": "@supercorks/git-promote",
+  "version": "1.0.3",
   "description": "Safely promote changes from develop to main using fast-forward-only merges to maintain a clean Git history.",
   "homepage": "https://github.com/SuperCorks/git-promote#readme",
   "bugs": {
@@ -9,6 +9,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SuperCorks/git-promote.git"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "license": "ISC",
   "author": "",
@@ -26,8 +29,8 @@
     "test": "echo \"Error: This repo has not tests.\" && exit 1"
   },
   "devDependencies": {
-    "typescript": "5.8.3",
-    "@types/node": "24.1.0"
+    "@types/node": "24.1.0",
+    "typescript": "5.8.3"
   },
   "engines": {
     "node": ">=16.0.0"
