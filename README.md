@@ -1,5 +1,4 @@
-# git-promote [![npm version](https://img.shields.io/npm/v/@supercorks/git-promote)](https://www.npmjs.com/package/@supercorks/git-promote)
-
+# git-promote [![npm](https://img.shields.io/npm/v/@supercorks/git-promote?logo=npm)](https://www.npmjs.com/package/@supercorks/git-promote)
 Safely promote changes from develop to main using fast-forward-only merges to maintain a clean Git history.
 
 ## Installation
