@@ -1,4 +1,4 @@
-# git-promote
+# git-promote [![npm version](https://img.shields.io/npm/v/@supercorks/git-promote)](https://www.npmjs.com/package/@supercorks/git-promote)
 
 Safely promote changes from develop to main using fast-forward-only merges to maintain a clean Git history.
 
@@ -18,7 +18,7 @@ For convenient access, you can set up a Git alias to run the command:
 
 ```bash
 # Add the alias to your global Git config
-git config --global alias.promote '!npx @supercorks/git-promote@latest'
+git config --global alias.promote '!npx @supercorks/git-promote'
 ```
 
 Then you can simply use:
