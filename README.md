@@ -1,11 +1,11 @@
 # GitOps [![npm](https://img.shields.io/npm/v/@supercorks/gitops?logo=npm)](https://www.npmjs.com/package/@supercorks/gitops)
-A comprehensive suite of Git operations tools to streamline your development workflow with safe branch management, automated cleanup, and release automation.
+A comprehensive suite of Git operations to streamline your development workflow with safe branch management, automated cleanup, and release automation.
 
-## Installation
+## Installation & Usage
 
-### Using npx
+### Option 1: On-Demand Usage (No Installation)
 
-You can use these tools without installing them via npx:
+Use npx to run commands without installing:
 
 ```bash
 # Individual tools
@@ -16,6 +16,66 @@ npx @supercorks/gitops git-release-notes
 npx @supercorks/gitops git-install-aliases
 ```
 
+**Pros:** Always uses latest version, no installation required  
+**Cons:** Slower execution, requires internet connection
+
+### Option 2: Local Project Installation
+
+Install as a development dependency in your project:
+
+```bash
+# Install locally
+npm install --save-dev @supercorks/gitops
+
+# Or with yarn
+yarn add --dev @supercorks/gitops
+```
+
+After local installation, you can run commands in several ways:
+
+```bash
+# Using npx (recommended - works from any subdirectory)
+npx git-promote
+npx git-cleanup
+npx git-done
+npx git-release-notes
+
+# Direct execution (only from project root)
+./node_modules/.bin/git-promote
+./node_modules/.bin/git-cleanup
+
+# Via npm scripts (add to package.json scripts section)
+npm run promote  # if you add "promote": "git-promote" to scripts
+```
+
+**Pros:** Faster execution, version consistency, works offline  
+**Cons:** Requires installation per project
+
+### Option 3: Global Installation
+
+Install globally for system-wide access:
+
+```bash
+# Install globally
+npm install -g @supercorks/gitops
+
+# Or with yarn
+yarn global add @supercorks/gitops
+```
+
+After global installation:
+
+```bash
+# Direct command usage
+git-promote
+git-cleanup
+git-done
+git-release-notes
+```
+
+**Pros:** Available everywhere, simple command names  
+**Cons:** Version inconsistency across projects, requires global permissions
+
 ### Setting up Git Aliases
 
 #### Automatic Installation (Recommended)
@@ -23,24 +83,35 @@ npx @supercorks/gitops git-install-aliases
 Use the built-in alias installer to quickly set up all aliases:
 
 ```bash
-# Install globally for all repositories
+# For npx users (works with any installation method)
 npx @supercorks/gitops git-install-aliases --global
 
-# Install locally for current repository only  
-npx @supercorks/gitops git-install-aliases --local
+# For local installation users
+npx git-install-aliases --global
+
+# For global installation users
+git-install-aliases --global
 ```
 
 #### Manual Installation
 
-For manual setup, you can add aliases to your global Git config:
+Add aliases to your Git config manually:
 
 ```bash
-# Add aliases to your global Git config manually
+# For npx users (most compatible)
 git config --global alias.promote '!npx @supercorks/gitops git-promote'
 git config --global alias.cleanup '!npx @supercorks/gitops git-cleanup'
 git config --global alias.done '!npx @supercorks/gitops git-done'
 git config --global alias.release-notes '!npx @supercorks/gitops git-release-notes'
+
+# For local/global installation users (shorter)
+git config --global alias.promote '!npx git-promote'
+git config --global alias.cleanup '!npx git-cleanup'
+git config --global alias.done '!npx git-done'
+git config --global alias.release-notes '!npx git-release-notes'
 ```
+
+#### Using Git Aliases
 
 After setting up aliases (either method), you can use them directly:
 
@@ -49,6 +120,19 @@ git promote
 git cleanup
 git done
 git release-notes
+```
+
+### Recommended Setup
+
+**For Teams:** Use local installation with Git aliases for consistency:
+```bash
+npm install --save-dev @supercorks/gitops
+npx git-install-aliases --global
+```
+
+**For Individual Use:** Use npx with Git aliases for simplicity:
+```bash
+npx @supercorks/gitops git-install-aliases --global
 ```
 
 ## Tools Overview
