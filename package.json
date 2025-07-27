@@ -1,14 +1,14 @@
 {
-  "name": "@supercorks/git-promote",
+  "name": "@supercorks/gitops",
   "version": "1.0.3",
-  "description": "Safely promote changes from develop to main using fast-forward-only merges to maintain a clean Git history.",
-  "homepage": "https://github.com/SuperCorks/git-promote#readme",
+  "description": "A comprehensive suite of Git operation tools for streamlined development workflows including branch promotion, cleanup, post-merge automation, and release management.",
+  "homepage": "https://github.com/SuperCorks/gitops#readme",
   "bugs": {
-    "url": "https://github.com/SuperCorks/git-promote/issues"
+    "url": "https://github.com/SuperCorks/gitops/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SuperCorks/git-promote.git"
+    "url": "git+https://github.com/SuperCorks/gitops.git"
   },
   "publishConfig": {
     "access": "public"
@@ -18,7 +18,11 @@
   "type": "commonjs",
   "main": "build/index.js",
   "bin": {
-    "git-promote": "build/index.js"
+    "git-promote": "build/git-promote.js",
+    "git-cleanup": "build/git-cleanup.js",
+    "git-done": "build/git-done.js",
+    "git-release-notes": "build/git-release-notes.js",
+    "git-install-aliases": "build/git-install-aliases.js"
   },
   "files": [
     "build"
@@ -30,6 +34,7 @@
   },
   "devDependencies": {
     "@types/node": "24.1.0",
+    "@types/yargs": "^17.0.33",
     "typescript": "5.8.3"
   },
   "engines": {
@@ -38,5 +43,8 @@
   "keywords": [
     "git",
     "cli"
-  ]
+  ],
+  "dependencies": {
+    "yargs": "^18.0.0"
+  }
 }

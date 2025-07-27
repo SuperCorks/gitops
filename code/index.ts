@@ -1,64 +1,76 @@
 #!/usr/bin/env node
 
-import { execSync } from "child_process";
+import path from 'path';
+import fs from 'fs';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 
-// This script helps promote changes from develop to main branch using --ff-only.
-// It ensures that main can only be updated if it can be fast-forwarded to develop's position,
-// preventing any unintended merge conflicts or history rewrites.
+// Read version from package.json
+const packageJsonPath = path.join(__dirname, '..', 'package.json');
+const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+const version = packageJson.version;
 
-// Get current branch and verify we're on develop
-const currentBranch = getCurrentBranch();
-if (currentBranch !== "develop") {
-  console.error("❌ Error: git promote must be run from develop branch");
-  console.error(`🌿 Current branch: ${currentBranch}`);
-  process.exit(1);
-}
+// Determine which script to run based on how this was invoked
+const scriptName = path.basename(process.argv[1]);
 
-// First update both branches to ensure we have the latest changes
-console.log("🔄 Updating develop and main branches...");
-updateDevelop();
-execSync("git fetch origin main:main", { stdio: "inherit" });
+// Common yargs configuration
+const commonYargs = yargs(hideBin(process.argv))
+  .version(version)
+  .help()
+  .alias('help', 'h');
 
-// Ensure develop is up-to-date with main
-console.log("🔍 Ensuring develop is up-to-date with main...");
-try {
-  execSync("git merge main --ff-only", { stdio: "inherit" });
-} catch (error) {
-  console.error("❌ Error: Could not fast-forward develop to main.");
-  console.error("⚠️  This means develop has diverged from main.");
-  console.error("💡 Please resolve any divergence before attempting to promote.");
-  process.exit(1);
-}
-
-// Switch to main
-console.log("🔀 Switching to main branch...");
-execSync("git checkout main", { stdio: "inherit" });
-execSync("git pull origin main", { stdio: "inherit" });
-
-// Attempt to merge develop into main with --ff-only
-console.log("🔄 Attempting to merge develop into main...");
-try {
-  execSync("git merge develop --ff-only", { stdio: "inherit" });
-  console.log("✅  Successfully merged develop into main!");
-
-  // Push changes to remote main branch
-  console.log("🚀 Pushing changes to remote main branch...");
-  execSync("git push origin main", { stdio: "inherit" });
-  console.log("🎉 Successfully pushed changes to main!");
-} catch (error) {
-  console.error("❌ Error: Could not fast-forward main to develop.");
-  console.error("⚠️  This usually means that main has diverged from develop.");
-  console.error("💡 Please resolve any divergence before attempting to promote.");
-  process.exit(1);
-}
-
-// Function definitions
-// --------------------
-
-function getCurrentBranch(): string {
-  return execSync("git rev-parse --abbrev-ref HEAD", { encoding: "utf-8" }).trim();
-}
-
-function updateDevelop(): void {
-  execSync("git pull origin develop", { stdio: "inherit" });
+switch (scriptName) {
+  case 'git-promote':
+    // Configure yargs for git-promote (no additional options needed)
+    commonYargs.usage('Usage: git-promote\n\nSafely promote changes from develop to main using fast-forward-only merges.');
+    require('./git-promote');
+    break;
+    
+  case 'git-cleanup':
+    // Configure yargs for git-cleanup (no additional options needed)
+    commonYargs.usage('Usage: git-cleanup\n\nRemove local branches that have been deleted on the remote.');
+    require('./git-cleanup');
+    break;
+    
+  case 'git-done':
+    // Configure yargs for git-done (no additional options needed)
+    commonYargs.usage('Usage: git-done\n\nStreamline workflow after a feature branch has been merged and deleted on remote.');
+    require('./git-done');
+    break;
+    
+  case 'git-release-notes':
+    // Configure yargs for git-release-notes (no additional options needed)
+    commonYargs.usage('Usage: git-release-notes\n\nGenerate release notes and calculate semantic version.');
+    require('./git-release-notes');
+    break;
+    
+  case 'git-install-aliases':
+    // Configure yargs for git-install-aliases with scope options
+    commonYargs
+      .usage('Usage: git-install-aliases [options]\n\nInstall git aliases for all GitOps suite commands.')
+      .option('global', {
+        alias: 'g',
+        type: 'boolean',
+        description: 'Install aliases globally for all repositories',
+        conflicts: 'local'
+      })
+      .option('local', {
+        alias: 'l',
+        type: 'boolean', 
+        description: 'Install aliases locally for current repository only',
+        conflicts: 'global'
+      })
+      .check((argv) => {
+        if (!argv.global && !argv.local) {
+          throw new Error('You must specify either --global or --local');
+        }
+        return true;
+      });
+    require('./git-install-aliases');
+    break;
+    
+  default:
+    console.error(`Unknown command: ${scriptName}`);
+    console.error('Available commands: git-promote, git-cleanup, git-done, git-release-notes, git-install-aliases');
+    process.exit(1);
 }
