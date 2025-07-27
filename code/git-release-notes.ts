@@ -123,11 +123,12 @@ function determineVersionBump(commits: Commit[]): { major: boolean; minor: boole
   let hasPatch = false;
 
   for (const commit of commits) {
-    if (commit.message.match(/^(feat|fix|refactor|style|test|docs|chore|perf)!:/)) {
+    // Updated regex to handle optional scope: type(scope)!: or type!:
+    if (commit.message.match(/^(feat|fix|refactor|style|test|docs|chore|perf)(\([^)]+\))?!:/)) {
       hasMajor = true;
-    } else if (commit.message.startsWith("feat:")) {
+    } else if (commit.message.match(/^feat(\([^)]+\))?:/)) {
       hasMinor = true;
-    } else if (commit.message.match(/^(fix|refactor|style|test|docs|chore|perf):/)) {
+    } else if (commit.message.match(/^(fix|refactor|style|test|docs|chore|perf)(\([^)]+\))?:/)) {
       hasPatch = true;
     }
   }

@@ -1,4 +1,4 @@
-# GitOps Suite [![npm](https://img.shields.io/npm/v/@supercorks/gitops?logo=npm)](https://www.npmjs.com/package/@supercorks/gitops)
+# GitOps [![npm](https://img.shields.io/npm/v/@supercorks/gitops?logo=npm)](https://www.npmjs.com/package/@supercorks/gitops)
 A comprehensive suite of Git operations tools to streamline your development workflow with safe branch management, automated cleanup, and release automation.
 
 ## Installation
