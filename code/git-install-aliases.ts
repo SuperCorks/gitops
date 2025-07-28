@@ -3,6 +3,7 @@
 import { execSync } from "child_process";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
+import * as os from "os";
 
 // This script installs git aliases for all GitOps suite commands
 // Usage:
@@ -44,6 +45,11 @@ const aliases = [
     description: "Promote changes from develop to main"
   },
   {
+    name: "propagate",
+    command: "!npx @supercorks/gitops git-propagate",
+    description: "Propagate changes between branches"
+  },
+  {
     name: "cleanup", 
     command: "!npx @supercorks/gitops git-cleanup",
     description: "Remove stale local branches"
@@ -62,11 +68,25 @@ const aliases = [
 
 console.log(`🔧 Installing GitOps suite aliases ${scopeText}...`);
 
+// Cross-platform command quoting function
+function getQuotedCommand(command: string): string {
+  // On Windows, we need to use double quotes and escape any existing double quotes
+  // On Unix-like systems, single quotes work better and avoid variable expansion
+  if (os.platform() === "win32") {
+    // Escape any existing double quotes in the command
+    const escapedCommand = command.replace(/"/g, '\\"');
+    return `"${escapedCommand}"`;
+  } else {
+    return `'${command}'`;
+  }
+}
+
 // Install each alias
 aliases.forEach(alias => {
   try {
     console.log(`  ✓ git ${alias.name} - ${alias.description}`);
-    execSync(`git config ${scope} alias.${alias.name} '${alias.command}'`, { stdio: "pipe" });
+    const quotedCommand = getQuotedCommand(alias.command);
+    execSync(`git config ${scope} alias.${alias.name} ${quotedCommand}`, { stdio: "pipe" });
   } catch (error) {
     console.error(`  ❌ Failed to install alias: git ${alias.name}`);
     console.error(`     Error: ${error}`);
