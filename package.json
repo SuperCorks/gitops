@@ -19,6 +19,7 @@
   "main": "build/index.js",
   "bin": {
     "git-promote": "build/git-promote.js",
+    "git-propagate": "build/git-propagate.js",
     "git-cleanup": "build/git-cleanup.js",
     "git-done": "build/git-done.js",
     "git-release-notes": "build/git-release-notes.js",

@@ -10,6 +10,7 @@ Use npx to run commands without installing:
 ```bash
 # Individual tools
 npx @supercorks/gitops git-promote
+npx @supercorks/gitops git-propagate
 npx @supercorks/gitops git-cleanup
 npx @supercorks/gitops git-done
 npx @supercorks/gitops git-release-notes
@@ -36,12 +37,14 @@ After local installation, you can run commands in several ways:
 ```bash
 # Using npx (recommended - works from any subdirectory)
 npx git-promote
+npx git-propagate
 npx git-cleanup
 npx git-done
 npx git-release-notes
 
 # Direct execution (only from project root)
 ./node_modules/.bin/git-promote
+./node_modules/.bin/git-propagate
 ./node_modules/.bin/git-cleanup
 
 # Via npm scripts (add to package.json scripts section)
@@ -68,6 +71,7 @@ After global installation:
 ```bash
 # Direct command usage
 git-promote
+git-propagate
 git-cleanup
 git-done
 git-release-notes
@@ -100,12 +104,14 @@ Add aliases to your Git config manually:
 ```bash
 # For npx users (most compatible)
 git config --global alias.promote '!npx @supercorks/gitops git-promote'
+git config --global alias.propagate '!npx @supercorks/gitops git-propagate'
 git config --global alias.cleanup '!npx @supercorks/gitops git-cleanup'
 git config --global alias.done '!npx @supercorks/gitops git-done'
 git config --global alias.release-notes '!npx @supercorks/gitops git-release-notes'
 
 # For local/global installation users (shorter)
 git config --global alias.promote '!npx git-promote'
+git config --global alias.propagate '!npx git-propagate'
 git config --global alias.cleanup '!npx git-cleanup'
 git config --global alias.done '!npx git-done'
 git config --global alias.release-notes '!npx git-release-notes'
@@ -117,6 +123,7 @@ After setting up aliases (either method), you can use them directly:
 
 ```bash
 git promote
+git propagate
 git cleanup
 git done
 git release-notes
@@ -137,6 +144,22 @@ npx @supercorks/gitops git-install-aliases --global
 
 ## Tools Overview
 
+### ⚙️ git-install-aliases
+Install git aliases for all GitOps suite commands with configurable scope.
+
+**Usage:**
+```bash
+git install-aliases --global        # Install globally for all repositories
+git install-aliases --local         # Install locally for current repository only
+```
+
+**Features:**
+- Automatically installs aliases for all GitOps commands
+- Supports both global and local installation scope
+- Conflict detection prevents installing both scopes simultaneously
+- Clear feedback on installation progress and results
+- Easy setup for teams and individual developers
+
 ### 🚀 git-promote
 Safely promote changes from develop to main using fast-forward-only merges to maintain a clean Git history.
 
@@ -150,6 +173,22 @@ git promote  # Must be run from develop branch
 - Prevents unintended merge conflicts or history rewrites
 - Automatically updates both develop and main branches
 - Pushes changes to remote main branch
+
+### 🌊 git-propagate
+Propagate changes between branches with two distinct modes based on your current branch.
+
+**Usage:**
+```bash
+git propagate  # From main: propagate to develop (fast-forward only)
+git propagate  # From develop: propagate to other branches (with confirmation)
+```
+
+**Features:**
+- **From main → develop**: Fast-forward only merge to maintain clean history
+- **From develop → other branches**: Interactive mode with user confirmation for each branch
+- Automatically updates source and target branches before merging
+- Optional push confirmation for each branch when propagating from develop
+- Skips main and develop branches when propagating from develop
 
 ### 🧹 git-cleanup
 Remove local branches that have been deleted on the remote to keep your local repository clean.
@@ -193,22 +232,6 @@ git release-notes                    # Generate release notes from main branch
 - Generates GitHub release URLs with pre-filled information
 - Follows semantic versioning standards
 
-### ⚙️ git-install-aliases
-Install git aliases for all GitOps suite commands with configurable scope.
-
-**Usage:**
-```bash
-git install-aliases --global        # Install globally for all repositories
-git install-aliases --local         # Install locally for current repository only
-```
-
-**Features:**
-- Automatically installs aliases for all GitOps commands
-- Supports both global and local installation scope
-- Conflict detection prevents installing both scopes simultaneously
-- Clear feedback on installation progress and results
-- Easy setup for teams and individual developers
-
 ## Workflow Integration
 
 These tools are designed to work together in a typical Git flow:
@@ -218,4 +241,5 @@ These tools are designed to work together in a typical Git flow:
 2. **Completion**: Use `git done` after your PR is merged and branch deleted
 3. **Maintenance**: Use `git cleanup` regularly to remove stale branches
 4. **Release**: Use `git promote` to move changes from develop to main
-5. **Documentation**: Use `git release-notes` to generate release information
+5. **Propagation**: Use `git propagate` to spread changes from main to develop or from develop to feature branches
+6. **Documentation**: Use `git release-notes` to generate release information
