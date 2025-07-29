@@ -34,6 +34,7 @@
     "test": "echo \"Error: This repo has not tests.\" && exit 1"
   },
   "devDependencies": {
+    "@supercorks/gitops": "^2.2.1",
     "@types/node": "24.1.0",
     "@types/yargs": "^17.0.33",
     "typescript": "5.8.3"
