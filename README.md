@@ -1,6 +1,15 @@
 # GitOps [![npm](https://img.shields.io/npm/v/@supercorks/gitops?logo=npm)](https://www.npmjs.com/package/@supercorks/gitops)
 A comprehensive suite of Git operations to streamline your development workflow with safe branch management, automated cleanup, and release automation.
 
+## Commands
+
+- [🚀 git promote](#-git-promote) - Safely promote changes upstream from develop to main
+- [🌊 git propagate](#-git-propagate) - Propagate changes downstream between branches
+- [🧹 git cleanup](#-git-cleanup) - Remove local branches deleted on remote
+- [✅ git done](#-git-done) - Streamline cleanup workflow after feature branch merge
+- [📋 git release-notes](#-git-release-notes) - Generate release notes and semantic versions
+
+
 ## Installation & Usage
 
 ### Quick Start (Recommended)
