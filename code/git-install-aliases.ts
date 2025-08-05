@@ -41,27 +41,27 @@ const scopeText = argv.global ? "globally" : "locally";
 const aliases = [
   {
     name: "promote",
-    command: "!npx @supercorks/gitops git-promote",
+    command: "!npx --package @supercorks/gitops git-promote",
     description: "Promote changes from develop to main"
   },
   {
     name: "propagate",
-    command: "!npx @supercorks/gitops git-propagate",
+    command: "!npx --package @supercorks/gitops git-propagate",
     description: "Propagate changes between branches"
   },
   {
     name: "cleanup", 
-    command: "!npx @supercorks/gitops git-cleanup",
+    command: "!npx --package @supercorks/gitops git-cleanup",
     description: "Remove stale local branches"
   },
   {
     name: "done",
-    command: "!npx @supercorks/gitops git-done", 
+    command: "!npx --package @supercorks/gitops git-done", 
     description: "Complete feature branch workflow"
   },
   {
     name: "release-notes",
-    command: "!npx @supercorks/gitops git-release-notes",
+    command: "!npx --package @supercorks/gitops git-release-notes",
     description: "Generate release notes and version"
   }
 ];
