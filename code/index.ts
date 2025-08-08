@@ -68,9 +68,16 @@ switch (scriptName) {
       });
     require('./git-install-aliases');
     break;
+  
+  case 'git-wip':
+    // Configure yargs for git-wip
+    commonYargs
+      .usage('Usage: git-wip [--no-push|-np]\n\nCreate a quick WIP commit and optionally push it (skips push with --no-push or -np).');
+    require('./git-wip');
+    break;
     
   default:
     console.error(`Unknown command: ${scriptName}`);
-    console.error('Available commands: git-promote, git-cleanup, git-done, git-release-notes, git-install-aliases');
+    console.error('Available commands: git-promote, git-cleanup, git-done, git-release-notes, git-install-aliases, git-wip');
     process.exit(1);
 }

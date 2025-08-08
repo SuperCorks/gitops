@@ -23,7 +23,8 @@
     "git-cleanup": "build/git-cleanup.js",
     "git-done": "build/git-done.js",
     "git-release-notes": "build/git-release-notes.js",
-    "git-install-aliases": "build/git-install-aliases.js"
+    "git-install-aliases": "build/git-install-aliases.js",
+    "git-wip": "build/git-wip.js"
   },
   "files": [
     "build"

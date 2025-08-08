@@ -63,6 +63,11 @@ const aliases = [
     name: "release-notes",
     command: "!npx --package @supercorks/gitops git-release-notes",
     description: "Generate release notes and version"
+  },
+  {
+    name: "wip",
+    command: "!npx --package @supercorks/gitops git-wip",
+    description: "Create a WIP commit and optionally push"
   }
 ];
 
