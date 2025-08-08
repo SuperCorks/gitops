@@ -8,6 +8,7 @@ A comprehensive suite of Git operations to streamline your development workflow 
 - 🧹 [git cleanup](#-git-cleanup) - Remove local branches deleted on remote
 - ✅ [git done](#-git-done) - Streamline cleanup workflow after feature branch merge
 - 📋 [git release-notes](#-git-release-notes) - Generate release notes and semantic versions
+- ✍️ [git wip](#-git-wip) - Quick WIP commit and optional push (blocked on main/develop)
 
 
 ## Installation & Usage
@@ -27,6 +28,7 @@ git propagate
 git cleanup
 git done
 git release-notes
+git wip
 ```
 
 
@@ -122,6 +124,21 @@ git release-notes                    # Generate release notes from main branch
 - Generates GitHub release URLs with pre-filled information
 - Follows semantic versioning standards
 
+### ✍️ git-wip
+Create a quick "work in progress" snapshot on your current branch.
+
+Usage:
+```bash
+git wip            # Adds all, commits with message "wip", and pushes
+git wip --no-push  # Skips pushing
+git wip -np        # Short flag for --no-push
+```
+
+Features:
+- Runs: git add . ; git commit -m "wip" ; git push (unless --no-push/-np)
+- Fails on protected branches main or develop
+- Exits gracefully if there's nothing to commit
+
 ## Workflow Integration
 
 These tools are designed to work together in a typical Git flow:
@@ -149,6 +166,7 @@ npx --package @supercorks/gitops git-cleanup
 npx --package @supercorks/gitops git-done
 npx --package @supercorks/gitops git-release-notes
 npx --package @supercorks/gitops git-install-aliases
+npx --package @supercorks/gitops git-wip
 ```
 
 **Pros:** Always uses latest version, no installation required  
@@ -175,6 +193,7 @@ npx git-propagate
 npx git-cleanup
 npx git-done
 npx git-release-notes
+npx git-wip
 
 # Direct execution (only from project root)
 ./node_modules/.bin/git-promote
@@ -209,6 +228,7 @@ git-propagate
 git-cleanup
 git-done
 git-release-notes
+git-wip
 ```
 
 **Pros:** Available everywhere, simple command names  
@@ -242,6 +262,7 @@ git config --global alias.propagate '!npx --package @supercorks/gitops git-propa
 git config --global alias.cleanup '!npx --package @supercorks/gitops git-cleanup'
 git config --global alias.done '!npx --package @supercorks/gitops git-done'
 git config --global alias.release-notes '!npx --package @supercorks/gitops git-release-notes'
+git config --global alias.wip '!npx --package @supercorks/gitops git-wip'
 
 # For local/global installation users (shorter)
 git config --global alias.promote '!npx git-promote'
@@ -249,4 +270,5 @@ git config --global alias.propagate '!npx git-propagate'
 git config --global alias.cleanup '!npx git-cleanup'
 git config --global alias.done '!npx git-done'
 git config --global alias.release-notes '!npx git-release-notes'
+git config --global alias.wip '!npx git-wip'
 ```
