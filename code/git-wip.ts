@@ -21,6 +21,29 @@ function shouldPush(argv: string[]): boolean {
   return !argv.includes("--no-push") && !argv.includes("-np");
 }
 
+function hasUpstream(): boolean {
+  try {
+    // This throws if no upstream is set
+    execSync("git rev-parse --abbrev-ref --symbolic-full-name @{u}", { stdio: "pipe" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function getDefaultRemote(): string | null {
+  try {
+    const remotes = execSync("git remote", { encoding: "utf-8" })
+      .split("\n")
+      .map((r) => r.trim())
+      .filter(Boolean);
+    if (remotes.includes("origin")) return "origin";
+    return remotes[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function main() {
   const branch = getCurrentBranch();
   if (isProtectedBranch(branch)) {
@@ -50,8 +73,18 @@ function main() {
 
   if (shouldPush(process.argv.slice(2))) {
     try {
-      console.log("🚀 Pushing branch to remote (git push)...");
-      execSync("git push", { stdio: "inherit" });
+      if (hasUpstream()) {
+        console.log("🚀 Pushing branch to remote (git push)...");
+        execSync("git push", { stdio: "inherit" });
+      } else {
+        const remote = getDefaultRemote();
+        if (!remote) {
+          console.log("ℹ️  No git remotes configured. Skipping push.");
+        } else {
+          console.log(`🚀 First push; setting upstream (git push -u ${remote} ${branch})...`);
+          execSync(`git push -u ${remote} ${branch}`, { stdio: "inherit" });
+        }
+      }
     } catch (error) {
       console.error("⚠️  Push failed:", error);
       process.exit(1);
