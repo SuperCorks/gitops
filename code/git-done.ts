@@ -24,12 +24,13 @@ if (!isBranchDeletedOnRemote(currentBranch)) {
   process.exit(1);
 }
 
-// Update and switch to develop
-console.log("🔄 Updating develop branch...");
-updateDevelop();
+// Resolve target base branch (prefer develop, fall back to main), update it, and switch
+const targetBase = resolveTargetBaseBranch();
+console.log(`🔄 Updating '${targetBase}' branch...`);
+updateBranch(targetBase);
 
-console.log("🔀 Switching to develop branch...");
-execSync("git checkout develop", { stdio: "inherit" });
+console.log(`🔀 Switching to '${targetBase}' branch...`);
+execSync(`git checkout ${targetBase}`, { stdio: "inherit" });
 
 // Clean up stale branches
 console.log("🧹 Running cleanup...");
@@ -75,12 +76,38 @@ function isBranchDeletedOnRemote(branch: string): boolean {
   }
 }
 
-function updateDevelop(): void {
+function branchExistsLocally(branch: string): boolean {
   try {
-    execSync("git fetch origin develop:develop", { stdio: "inherit" });
+    execSync(`git show-ref --verify --quiet refs/heads/${branch}`, { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function branchExistsOnRemote(branch: string): boolean {
+  try {
+    const out = execSync(`git ls-remote --heads origin ${branch}`, { encoding: "utf-8", stdio: "pipe" }).trim();
+    return out.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+function resolveTargetBaseBranch(): string {
+  // Prefer 'develop' if it exists locally or on remote; otherwise use 'main'
+  if (branchExistsLocally("develop") || branchExistsOnRemote("develop")) {
+    return "develop";
+  }
+  return "main";
+}
+
+function updateBranch(branch: string): void {
+  try {
+    execSync(`git fetch origin ${branch}:${branch}`, { stdio: "inherit" });
   } catch (error) {
-    console.error("❌ Error updating develop branch:", error);
-    console.error("💡 Make sure you have the correct permissions and try again");
+    console.error(`❌ Error updating '${branch}' branch:`, error);
+    console.error("💡 Make sure the branch exists and you have the correct permissions, then try again");
     process.exit(1);
   }
 }
