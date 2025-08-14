@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import { execSync } from "child_process";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
 
 // This script saves a quick Work-In-Progress snapshot on the current branch.
 // It will:
@@ -17,8 +19,25 @@ function isProtectedBranch(branch: string): boolean {
   return branch === "main" || branch === "develop";
 }
 
-function shouldPush(argv: string[]): boolean {
-  return !argv.includes("--no-push") && !argv.includes("-np");
+// yargs parsing for flags
+const argv = yargs(hideBin(process.argv))
+  .usage(
+    "Usage: git wip [options]\n\n" +
+      "Create a quick WIP commit (git add .; git commit -m 'wip') and optionally push.\n" +
+      "Skipped on protected branches main/develop." 
+  )
+  .option("no-push", {
+    alias: "np",
+    type: "boolean",
+    description: "Skip pushing after creating the WIP commit",
+    default: false,
+  })
+  .help()
+  .alias("help", "h")
+  .parseSync();
+
+function shouldPush(): boolean {
+  return !argv["no-push"];
 }
 
 function hasUpstream(): boolean {
@@ -71,7 +90,7 @@ function main() {
     process.exit(1);
   }
 
-  if (shouldPush(process.argv.slice(2))) {
+  if (shouldPush()) {
     try {
       if (hasUpstream()) {
         console.log("🚀 Pushing branch to remote (git push)...");

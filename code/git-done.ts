@@ -1,6 +1,18 @@
 #!/usr/bin/env node
 
 import { execSync } from "child_process";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
+
+// Argument parsing / help
+yargs(hideBin(process.argv))
+  .usage(
+    "Usage: git done\n\n" +
+      "Run after your feature branch PR is merged & remote branch deleted. Switches to develop (or main), updates, and runs cleanup."
+  )
+  .help()
+  .alias("help", "h")
+  .parseSync();
 
 // This script helps streamline the workflow after a feature branch has been merged.
 // It verifies the current branch has been properly deleted on the remote ([gone]),

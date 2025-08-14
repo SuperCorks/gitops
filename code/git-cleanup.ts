@@ -1,6 +1,18 @@
 #!/usr/bin/env node
 
 import { execSync } from "child_process";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
+
+// Argument parsing / help
+yargs(hideBin(process.argv))
+  .usage(
+    "Usage: git cleanup\n\n" +
+      "Remove local branches that have been deleted on the remote (marked as [gone])."
+  )
+  .help()
+  .alias("help", "h")
+  .parseSync();
 
 // This script helps maintain a clean git repository by removing local branches
 // that have been deleted on the remote. It fetches the latest remote information,

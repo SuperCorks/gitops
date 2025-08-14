@@ -1,6 +1,18 @@
 #!/usr/bin/env node
 
 import { execSync } from "child_process";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
+
+// Argument parsing / help
+yargs(hideBin(process.argv))
+  .usage(
+    "Usage: git release-notes\n\n" +
+      "Generate release notes and calculate next semantic version from conventional commits on main."
+  )
+  .help()
+  .alias("help", "h")
+  .parseSync();
 
 // This script generates release notes by analyzing Git history and determining the next
 // semantic version from the main branch.

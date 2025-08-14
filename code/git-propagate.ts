@@ -2,6 +2,18 @@
 
 import { execSync } from "child_process";
 import * as readline from "readline";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
+
+// Argument parsing / help
+yargs(hideBin(process.argv))
+  .usage(
+    "Usage: git propagate\n\n" +
+      "From main: fast-forward propagate to develop. From develop: interactively merge into other branches."
+  )
+  .help()
+  .alias("help", "h")
+  .parseSync();
 
 // This script helps propagate changes between branches:
 // 1. From main -> develop (fast-forward only)

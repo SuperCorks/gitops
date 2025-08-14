@@ -1,13 +1,37 @@
 #!/usr/bin/env node
 
 import { execSync } from "child_process";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
 
 // git promote now has two modes:
 // 1. From a feature branch -> develop (squash merge with provided commit message, branch deletion)
 // 2. From develop -> main (fast-forward only, existing behavior)
 
+// --- Argument Parsing (yargs) ---
+// Usage patterns:
+//   git promote                   (from develop -> main)
+//   git promote "feat: add X"     (from feature -> develop, squash commit message)
+//   git promote -m "feat: add X"  (alternative flag style on feature branch)
+const argv = yargs(hideBin(process.argv))
+  .usage(
+    "Usage:\n" +
+      "  git promote               # From develop: fast-forward main\n" +
+      "  git promote <message>     # From feature: squash merge with message\n" +
+      "  git promote -m <message>  # Alternate flag for message in feature mode\n\n" +
+      "Promote changes between branches. Feature branches are squash merged into develop; develop fast-forwards into main."
+  )
+  .option("message", {
+    alias: "m",
+    type: "string",
+    description: "Commit message for squash merge when promoting a feature branch",
+  })
+  .help()
+  .alias("help", "h")
+  .parseSync();
+
 const currentBranch = getCurrentBranch();
-const commitMessageArg = process.argv.slice(2).join(" ").trim();
+const commitMessageArg = (argv.message || argv._.join(" ")).trim();
 
 if (currentBranch === "develop") {
   // develop -> main fast-forward promotion
