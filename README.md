@@ -53,18 +53,47 @@ git install-aliases --local         # Install locally for current repository onl
 - Easy setup for teams and individual developers
 
 ### 🚀 git-promote
-Safely promote changes from develop to main using fast-forward-only merges to maintain a clean Git history.
+Promote changes between branches in two modes:
+
+1. Feature branch ➜ develop (squash merge)
+2. develop ➜ main (fast-forward only)
 
 **Usage:**
 ```bash
-git promote  # Must be run from develop branch
+# From a feature branch (squash merge into develop)
+git promote "feat: add amazing capability"
+
+# From develop (fast-forward main)
+git promote
 ```
 
-**Features:**
-- Only allows fast-forward merges to maintain clean history
-- Prevents unintended merge conflicts or history rewrites
-- Automatically updates both develop and main branches
-- Pushes changes to remote main branch
+**Feature Branch ➜ develop Behavior:**
+1. Ensures working tree is clean (fails if uncommitted changes)
+2. Updates local develop from origin
+3. Verifies develop isn't ahead of your feature branch (fails with guidance if it is)
+4. Performs: git merge <feature> --no-commit --squash
+5. Commits with the message you provide
+6. Pushes develop
+7. Deletes the local feature branch
+8. Deletes the remote feature branch if it exists
+
+Your feature branch history is collapsed into a single semantic commit on develop.
+
+**Develop ➜ main Behavior:**
+- Updates develop and main
+- Ensures develop can fast-forward to main (ensuring no divergence)
+- Fast-forwards main to develop (no merge commits)
+- Pushes main
+
+**Why squash feature branches?**
+- Keeps develop history concise and semantic
+- Avoids noisy iterative commits
+- Forces synchronization with develop before merging
+
+**Notes:**
+- Commit message is required when promoting from a feature branch
+- Running from main is not supported (use develop or a feature branch)
+- If develop has new commits you don't have, you must merge/rebase first
 
 ### 🌊 git-propagate
 Propagate changes between branches with two distinct modes based on your current branch.
