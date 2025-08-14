@@ -98,7 +98,14 @@ function promoteFeatureToDevelop(featureBranch: string, commitMessage: string): 
 
   // Commit
   console.log("📝 Creating squash commit...");
-  execSync(`git commit -m "${escapeForShell(commitMessage)}"`, { stdio: "inherit" });
+  try {
+    execSync(`git commit -m "${escapeForShell(commitMessage)}"`, { stdio: "inherit" });
+  } catch (error: any) {
+    const status = error?.status ?? 1;
+    console.error("❌ git commit failed (likely pre-commit hook). Output above.");
+    console.error("💡 Fix the issue and run: git commit -m \"" + commitMessage + "\" then push develop manually.");
+    process.exit(status);
+  }
 
   // Push develop
   console.log("🚀 Pushing develop to remote...");

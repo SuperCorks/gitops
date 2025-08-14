@@ -78,15 +78,23 @@ function main() {
     execSync("git add .", { stdio: "inherit" });
 
     console.log('📝 Committing (git commit -m "wip")...');
-    execSync('git commit -m "wip"', { stdio: "pipe" });
-  } catch (error: any) {
-    // If commit fails (e.g., nothing to commit), exit gracefully
-    const message = String(error?.stdout || error?.stderr || error?.message || error || "");
-    if (message.includes("nothing to commit") || message.includes("no changes added to commit")) {
-      console.log("ℹ️  Nothing to commit. Skipping push.");
-      process.exit(0);
+    try {
+      execSync('git commit -m "wip"', { stdio: "inherit" });
+    } catch (error: any) {
+      // Handle expected non-zero exit (e.g. pre-commit hook failure) without noisy stack
+      const status = error?.status ?? 1;
+      const combined = String(error?.stdout || error?.stderr || "").trim();
+      if (combined.includes("nothing to commit") || combined.includes("no changes added to commit")) {
+        console.log("ℹ️  Nothing to commit. Skipping push.");
+        process.exit(0);
+      }
+      console.error("❌ git commit failed (hook or validation). Output above.");
+      process.exit(status);
     }
-    console.error("❌ Error during WIP commit:", message || error);
+  } catch (error: any) {
+    // This outer catch would only be reached for add . failing
+    const message = String(error?.message || error || "");
+    console.error("❌ Error while staging changes:", message);
     process.exit(1);
   }
 
