@@ -36,23 +36,7 @@ _Note: For other installation methods including global installation, on-demand u
 
 ## Tools Overview
 
-### ⚙️ git-install-aliases
-Install git aliases for all GitOps suite commands with configurable scope.
-
-**Usage:**
-```bash
-git install-aliases --global        # Install globally for all repositories
-git install-aliases --local         # Install locally for current repository only
-```
-
-**Features:**
-- Automatically installs aliases for all GitOps commands
-- Supports both global and local installation scope
-- Conflict detection prevents installing both scopes simultaneously
-- Clear feedback on installation progress and results
-- Easy setup for teams and individual developers
-
-### 🚀 git-promote
+### 🚀 git promote
 Promote changes between branches in two modes:
 
 1. Feature branch ➜ develop (squash merge)
@@ -95,7 +79,7 @@ Your feature branch history is collapsed into a single semantic commit on develo
 - Running from main is not supported (use develop or a feature branch)
 - If develop has new commits you don't have, you must merge/rebase first
 
-### 🌊 git-propagate
+### 🌊 git propagate
 Propagate changes between branches with two distinct modes based on your current branch.
 
 **Usage:**
@@ -111,7 +95,7 @@ git propagate  # From develop: propagate to other branches (with confirmation)
 - Optional push confirmation for each branch when propagating from develop
 - Skips main and develop branches when propagating from develop
 
-### 🧹 git-cleanup
+### 🧹 git cleanup
 Remove local branches that have been deleted on the remote to keep your local repository clean.
 
 **Usage:**
@@ -125,7 +109,7 @@ git cleanup  # Can be run from any branch
 - Fetches and prunes remote branches first
 - Provides clear feedback on what's being cleaned
 
-### ✅ git-done
+### ✅ git done
 Streamline the workflow after a feature branch has been merged and deleted on remote.
 
 **Usage:**
@@ -139,7 +123,7 @@ git done  # Must be run from a feature branch that's been merged/deleted on remo
 - Automatically runs cleanup to remove stale branches
 - Ensures a clean transition back to develop
 
-### 📋 git-release-notes
+### 📋 git release-notes
 Generate release notes and calculate the next semantic version based on conventional commits.
 
 **Usage:**
@@ -153,7 +137,7 @@ git release-notes                    # Generate release notes from main branch
 - Generates GitHub release URLs with pre-filled information
 - Follows semantic versioning standards
 
-### ✍️ git-wip
+### ✍️ git wip
 Create a quick "work in progress" snapshot on your current branch.
 
 Usage:
@@ -173,17 +157,34 @@ Features:
 - Fails on protected branches main or develop
 - Exits gracefully if there's nothing to commit
 
+### ⚙️ git-install-aliases
+Install git aliases for all GitOps commands with configurable scope.
+
+**Usage:**
+```bash
+npx --package @supercorks/gitops git-install-aliase --global        # Install globally for all repositories
+npx --package @supercorks/gitops git-install-aliase --local         # Install locally for current repository only
+```
+
+**Features:**
+- Automatically installs aliases for all GitOps commands
+- Supports both global and local installation scope
+- Conflict detection prevents installing both scopes simultaneously
+- Clear feedback on installation progress and results
+- Easy setup for teams and individual developers
+
+
 ## Workflow Integration
 
 These tools are designed to work together in a typical Git flow:
 
-0. **Setup**: Use `git install-aliases --global` to set up convenient aliases
+0. **Setup**: Use `npx --package @supercorks/gitops git-install-aliase --local` to set up convenient aliases
 1. **Development**: Work on feature branches
 2. **Completion**: Use `git done` after your PR is merged and branch deleted
 3. **Maintenance**: Use `git cleanup` regularly to remove stale branches
-4. **Release**: Use `git promote` to move changes from develop to main
-5. **Propagation**: Use `git propagate` to spread changes from main to develop or from develop to feature branches
-6. **Documentation**: Use `git release-notes` to generate release information
+4. **Feature Promotion**: Use `git promote` to move changes from develop to main
+5. **Fix Propagation**: Use `git propagate` to spread changes from main to develop or from develop to feature branches
+6. **Release**: Use `git release-notes` to generate release information
 
 
 ## Alternative Installation Methods
