@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { execSync } from "child_process";
+import { execSync, spawnSync } from "child_process";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 
@@ -79,25 +79,31 @@ function main() {
 
   // Build commit message from remaining positional args. Join so multiple words become one message.
   const commitMessageRaw = argv._.length ? argv._.join(" ") : "wip";
-  // Safely single-quote for shell (replace ' with '\'' pattern)
-  const commitMessageEscaped = commitMessageRaw.replace(/'/g, "'\\''");
+  // Use spawnSync with arg array instead of shell quoting for cross-platform safety (Windows CMD needs double quotes).
 
   try {
     console.log("➕ Adding changes (git add .)...");
     execSync("git add .", { stdio: "inherit" });
 
-    console.log(`📝 Committing (git commit -m '${commitMessageRaw}')...`);
+    console.log(`📝 Committing (git commit -m "${commitMessageRaw}")...`);
     try {
-      execSync(`git commit -m '${commitMessageEscaped}'`, { stdio: "inherit" });
-    } catch (error: any) {
-      // Handle expected non-zero exit (e.g. pre-commit hook failure) without noisy stack
-      const status = error?.status ?? 1;
-      const combined = String(error?.stdout || error?.stderr || "").trim();
-      if (combined.includes("nothing to commit") || combined.includes("no changes added to commit")) {
-        console.log("ℹ️  Nothing to commit. Skipping push.");
-        process.exit(0);
+      const commitResult = spawnSync("git", ["commit", "-m", commitMessageRaw], { stdio: "inherit" });
+      if (commitResult.status !== 0) {
+        const status = commitResult.status ?? 1;
+        // We can't easily capture output with inherit, so run a lightweight status check for no-op commit.
+        try {
+          const dry = execSync("git diff --cached --name-status", { encoding: "utf-8" }).trim();
+          if (!dry) {
+            console.log("ℹ️  Nothing to commit. Skipping push.");
+            process.exit(0);
+          }
+        } catch {/* ignore */}
+        console.error("❌ git commit failed (hook or validation). Output above.");
+        process.exit(status);
       }
-      console.error("❌ git commit failed (hook or validation). Output above.");
+    } catch (error: any) {
+      const status = error?.status ?? 1;
+      console.error("❌ git commit execution error.");
       process.exit(status);
     }
   } catch (error: any) {
