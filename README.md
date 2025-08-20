@@ -161,10 +161,15 @@ Usage:
 git wip            # Adds all, commits with message "wip", and pushes
 git wip --no-push  # Skips pushing
 git wip -np        # Short flag for --no-push
+git wip "refactor auth flow"        # Custom commit message
+git wip -np "debug android build"  # Combine flag + custom message
 ```
 
 Features:
-- Runs: git add . ; git commit -m "wip" ; git push (unless --no-push/-np)
+- Runs: git add . ; git commit -m <message> ; git push (unless --no-push/-np)
+- Default commit message is "wip" if none provided
+- Supports custom multi-word commit messages as positional args
+- Safely handles single quotes inside your message
 - Fails on protected branches main or develop
 - Exits gracefully if there's nothing to commit
 

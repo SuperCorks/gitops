@@ -19,12 +19,16 @@ function isProtectedBranch(branch: string): boolean {
   return branch === "main" || branch === "develop";
 }
 
-// yargs parsing for flags
+// yargs parsing for flags + optional commit message positional args
 const argv = yargs(hideBin(process.argv))
   .usage(
-    "Usage: git wip [options]\n\n" +
-      "Create a quick WIP commit (git add .; git commit -m 'wip') and optionally push.\n" +
-      "Skipped on protected branches main/develop." 
+    "Usage: git wip [options] [commit message]\n\n" +
+      "Examples:\n" +
+      "  git wip\n" +
+      "  git wip 'WIP: refactor auth flow'\n" +
+      "  git wip --no-push 'temp: debug android build'\n\n" +
+      "Creates a quick WIP commit (git add .; git commit -m <message>) and optionally pushes.\n" +
+      "Skipped on protected branches main/develop. Default commit message is 'wip'."
   )
   .option("no-push", {
     alias: "np",
@@ -73,13 +77,18 @@ function main() {
 
   console.log("💾 Saving WIP on branch:", branch);
 
+  // Build commit message from remaining positional args. Join so multiple words become one message.
+  const commitMessageRaw = argv._.length ? argv._.join(" ") : "wip";
+  // Safely single-quote for shell (replace ' with '\'' pattern)
+  const commitMessageEscaped = commitMessageRaw.replace(/'/g, "'\\''");
+
   try {
     console.log("➕ Adding changes (git add .)...");
     execSync("git add .", { stdio: "inherit" });
 
-    console.log('📝 Committing (git commit -m "wip")...');
+    console.log(`📝 Committing (git commit -m '${commitMessageRaw}')...`);
     try {
-      execSync('git commit -m "wip"', { stdio: "inherit" });
+      execSync(`git commit -m '${commitMessageEscaped}'`, { stdio: "inherit" });
     } catch (error: any) {
       // Handle expected non-zero exit (e.g. pre-commit hook failure) without noisy stack
       const status = error?.status ?? 1;
