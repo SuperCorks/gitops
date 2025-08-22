@@ -9,7 +9,8 @@ import { hideBin } from "yargs/helpers";
 yargs(hideBin(process.argv))
   .usage(
     "Usage: git propagate\n\n" +
-      "From main: fast-forward propagate to develop. From develop: interactively merge into other branches."
+      "From main: fast-forward propagate to develop. From develop: interactively merge into other branches.\n" +
+      "If no 'develop' branch exists (locally or remote), running on main will interactively propagate main to feature branches."
   )
   .help()
   .alias("help", "h")
@@ -23,7 +24,14 @@ async function main() {
   const currentBranch = getCurrentBranch();
   
   if (currentBranch === "main") {
-    await propagateMainToDevelop();
+    const hasDevelopLocal = branchExistsLocal("develop");
+    const hasDevelopRemote = branchExistsOnRemote("develop");
+    if (!hasDevelopLocal && !hasDevelopRemote) {
+      console.log("ℹ️  No 'develop' branch detected locally or on remote. Propagating from 'main' directly to feature branches.");
+      await propagateSourceToOtherBranches("main");
+    } else {
+      await propagateMainToDevelop();
+    }
   } else if (currentBranch === "develop") {
     await propagateDevelopToOtherBranches();
   } else {
@@ -69,43 +77,47 @@ async function propagateMainToDevelop(): Promise<void> {
 
 async function propagateDevelopToOtherBranches(): Promise<void> {
   console.log("🔄 Propagating changes from develop to other branches...");
-  
-  // Update develop branch
-  console.log("🔄 Updating develop branch...");
-  execSync("git pull origin develop", { stdio: "inherit" });
-  
-  // Get all branches except main and develop
+  await propagateSourceToOtherBranches("develop");
+}
+
+async function propagateSourceToOtherBranches(sourceBranch: string): Promise<void> {
+  // Update source branch
+  console.log(`🔄 Updating ${sourceBranch} branch...`);
+  execSync(`git pull origin ${sourceBranch}`, { stdio: "inherit" });
+
+  // Get all branches except main and develop (and the source itself) & remote refs
   const allBranches = getAllBranches();
-  const otherBranches = allBranches.filter(branch => 
-    branch !== "main" && 
-    branch !== "develop" && 
+  const otherBranches = allBranches.filter(branch =>
+    branch !== "main" &&
+    branch !== "develop" &&
+    branch !== sourceBranch &&
     !branch.startsWith("origin/") &&
     branch.trim() !== ""
   );
-  
+
   if (otherBranches.length === 0) {
     console.log("ℹ️  No other branches found to propagate to.");
     return;
   }
-  
+
   console.log(`\n📋 Found ${otherBranches.length} other branches:`);
   otherBranches.forEach(branch => console.log(`   • ${branch}`));
   console.log("");
-  
+
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
   });
-  
+
   for (const branch of otherBranches) {
-    const shouldMerge = await askUserConfirmation(rl, `🤔 Merge develop into "${branch}"? (y/n): `);
-    
+    const shouldMerge = await askUserConfirmation(rl, `🤔 Merge ${sourceBranch} into "${branch}"? (y/n): `);
+
     if (shouldMerge) {
       try {
-        await mergeDevelopIntoBranch(branch);
-        console.log(`✅ Successfully merged develop into ${branch}!\n`);
+        await mergeSourceIntoBranch(sourceBranch, branch);
+        console.log(`✅ Successfully merged ${sourceBranch} into ${branch}!\n`);
       } catch (error) {
-        console.error(`❌ Failed to merge develop into ${branch}`);
+        console.error(`❌ Failed to merge ${sourceBranch} into ${branch}`);
         console.error(`⚠️  Error: ${error}`);
         console.log("");
       }
@@ -113,15 +125,15 @@ async function propagateDevelopToOtherBranches(): Promise<void> {
       console.log(`⏭️  Skipped ${branch}\n`);
     }
   }
-  
+
   rl.close();
-  
+
   console.log("🎉 Propagation complete!");
 }
 
-async function mergeDevelopIntoBranch(branch: string): Promise<void> {
+async function mergeSourceIntoBranch(sourceBranch: string, branch: string): Promise<void> {
   console.log(`🔄 Processing branch: ${branch}`);
-  
+
   // Fetch and update the target branch
   console.log(`   📥 Fetching ${branch}...`);
   try {
@@ -130,11 +142,11 @@ async function mergeDevelopIntoBranch(branch: string): Promise<void> {
     // Branch might not exist on remote, that's okay
     console.log(`   ℹ️  Branch ${branch} not found on remote (local only)`);
   }
-  
+
   // Switch to the target branch
   console.log(`   🔀 Switching to ${branch}...`);
   execSync(`git checkout ${branch}`, { stdio: "inherit" });
-  
+
   // Pull latest changes if branch exists on remote
   try {
     execSync(`git pull origin ${branch}`, { stdio: "pipe" });
@@ -142,20 +154,20 @@ async function mergeDevelopIntoBranch(branch: string): Promise<void> {
   } catch (error) {
     console.log(`   ℹ️  No remote tracking for ${branch}`);
   }
-  
-  // Merge develop into the branch
-  console.log(`   🔄 Merging develop into ${branch}...`);
-  execSync(`git merge develop`, { stdio: "inherit" });
-  
+
+  // Merge source into the branch
+  console.log(`   🔄 Merging ${sourceBranch} into ${branch}...`);
+  execSync(`git merge ${sourceBranch}`, { stdio: "inherit" });
+
   // Ask if user wants to push
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
   });
-  
+
   const shouldPush = await askUserConfirmation(rl, `   🚀 Push ${branch} to remote? (y/n): `);
   rl.close();
-  
+
   if (shouldPush) {
     try {
       execSync(`git push origin ${branch}`, { stdio: "inherit" });
@@ -184,6 +196,24 @@ function getAllBranches(): string[] {
     .split("\n")
     .map(line => line.replace(/^\*?\s+/, "").trim())
     .filter(line => line.length > 0);
+}
+
+function branchExistsOnRemote(branch: string): boolean {
+  try {
+    const out = execSync(`git ls-remote --heads origin ${branch}`, { encoding: "utf-8", stdio: "pipe" }).trim();
+    return out.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+function branchExistsLocal(branch: string): boolean {
+  try {
+    execSync(`git show-ref --verify --quiet refs/heads/${branch}`);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // Run the main function
