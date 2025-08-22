@@ -28,12 +28,18 @@ const argv = yargs(hideBin(process.argv))
       "  git wip 'WIP: refactor auth flow'\n" +
       "  git wip --no-push 'temp: debug android build'\n\n" +
       "Creates a quick WIP commit (git add .; git commit -m <message>) and optionally pushes.\n" +
-      "Skipped on protected branches main/develop. Default commit message is 'wip'."
+      "Skipped on protected branches main/develop. Default commit message is 'wip'.\n" +
+      "By default a second line '[skip ci]' is added to prevent CI runs. Use --ci to omit it."
   )
   .option("no-push", {
     alias: "np",
     type: "boolean",
     description: "Skip pushing after creating the WIP commit",
+    default: false,
+  })
+  .option("ci", {
+    type: "boolean",
+    description: "Include this WIP commit in CI (omit automatic [skip ci] second line)",
     default: false,
   })
   .help()
@@ -79,15 +85,20 @@ function main() {
 
   // Build commit message from remaining positional args. Join so multiple words become one message.
   const commitMessageRaw = argv._.length ? argv._.join(" ") : "wip";
+  const appendSkipCi = !argv.ci;
+  // Ensure [skip ci] becomes exactly the second line (no blank spacer line)
+  const commitMessage = appendSkipCi ? `${commitMessageRaw}\n[skip ci]` : commitMessageRaw;
   // Use spawnSync with arg array instead of shell quoting for cross-platform safety (Windows CMD needs double quotes).
 
   try {
     console.log("➕ Adding changes (git add .)...");
     execSync("git add .", { stdio: "inherit" });
 
-    console.log(`📝 Committing (git commit -m "${commitMessageRaw}")...`);
+    console.log(
+      `📝 Committing (git commit -m "${commitMessageRaw}"${appendSkipCi ? " + [skip ci]" : ""})...`
+    );
     try {
-      const commitResult = spawnSync("git", ["commit", "-m", commitMessageRaw], { stdio: "inherit" });
+      const commitResult = spawnSync("git", ["commit", "-m", commitMessage], { stdio: "inherit" });
       if (commitResult.status !== 0) {
         const status = commitResult.status ?? 1;
         // We can't easily capture output with inherit, so run a lightweight status check for no-op commit.
