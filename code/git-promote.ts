@@ -37,8 +37,14 @@ if (currentBranch === "develop") {
   // develop -> main fast-forward promotion
   promoteDevelopToMain();
 } else if (isFeatureBranch(currentBranch)) {
-  // feature -> develop squash merge
-  promoteFeatureToDevelop(currentBranch, commitMessageArg);
+  // feature -> develop (or main if develop missing) squash merge
+  const hasDevelopLocal = branchExistsLocal("develop");
+  const hasDevelopRemote = branchExistsOnRemote("develop");
+  if (!hasDevelopLocal && !hasDevelopRemote) {
+    promoteFeatureToMain(currentBranch, commitMessageArg);
+  } else {
+    promoteFeatureToDevelop(currentBranch, commitMessageArg);
+  }
 } else if (currentBranch === "main") {
   console.error("❌ Error: git promote cannot be run from main branch directly");
   console.error("💡 Run from develop to fast-forward main OR from a feature branch to squash into develop.");
@@ -137,6 +143,94 @@ function promoteFeatureToDevelop(featureBranch: string, commitMessage: string): 
 }
 
 // --------------------
+// Feature -> Main (when no develop branch exists)
+// --------------------
+function promoteFeatureToMain(featureBranch: string, commitMessage: string): void {
+  console.log(`🚀 Promoting feature branch '${featureBranch}' directly to main (no develop branch present) ...`);
+
+  if (!commitMessage) {
+    console.error("❌ Error: Commit message is required when promoting a feature branch.");
+    console.error('💡 Usage: git promote "feat: add amazing thing"');
+    process.exit(1);
+  }
+
+  ensureCleanWorkingTree();
+
+  // Update main (fetch latest into local before switching)
+  console.log("🔄 Fetching latest main branch...");
+  try {
+    execSync("git fetch origin main:main", { stdio: "inherit" });
+  } catch (error) {
+    console.error("❌ Error: Could not fetch main branch.");
+    console.error("💡 Ensure 'main' exists on remote or locally.");
+    process.exit(1);
+  }
+
+  // Ensure main is ancestor of feature branch
+  console.log("🔍 Checking that main is contained in feature branch...");
+  if (!isAncestor("main", featureBranch)) {
+    console.error("❌ Error: main has commits not present in your feature branch.");
+    console.error("💡 Please run 'git merge main' (or rebase) on your feature branch, resolve conflicts, then retry.");
+    process.exit(1);
+  }
+
+  // Switch to main
+  console.log("🔀 Switching to main branch...");
+  execSync("git checkout main", { stdio: "inherit" });
+  console.log("🔄 Pulling latest main from remote...");
+  execSync("git pull origin main", { stdio: "inherit" });
+
+  // Perform squash merge
+  console.log(`🔄 Squash merging '${featureBranch}' into main...`);
+  try {
+    execSync(`git merge ${featureBranch} --no-commit --squash`, { stdio: "inherit" });
+  } catch (error) {
+    console.error("❌ Error: Squash merge failed.");
+    console.error("💡 Resolve any conflicts, then run the same git merge command manually and commit.");
+    process.exit(1);
+  }
+
+  // Commit
+  console.log("📝 Creating squash commit...");
+  try {
+    execSync(`git commit -m "${escapeForShell(commitMessage)}"`, { stdio: "inherit" });
+  } catch (error: any) {
+    const status = error?.status ?? 1;
+    console.error("❌ git commit failed (likely pre-commit hook). Output above.");
+    console.error("💡 Fix the issue and run: git commit -m \"" + commitMessage + "\" then push main manually.");
+    process.exit(status);
+  }
+
+  // Push main
+  console.log("🚀 Pushing main to remote...");
+  execSync("git push origin main", { stdio: "inherit" });
+
+  // Delete feature branch locally
+  console.log(`🗑️  Deleting local branch '${featureBranch}'...`);
+  try {
+    execSync(`git branch -D ${featureBranch}`, { stdio: "inherit" });
+  } catch (error) {
+    console.error(`⚠️  Warning: Could not delete local branch '${featureBranch}': ${error}`);
+  }
+
+  // Delete remote branch if exists
+  console.log(`🗑️  Attempting to delete remote branch '${featureBranch}' (if it exists)...`);
+  try {
+    const existsRemote = branchExistsOnRemote(featureBranch);
+    if (existsRemote) {
+      execSync(`git push --delete origin ${featureBranch}`, { stdio: "inherit" });
+      console.log("✅ Remote branch deleted.");
+    } else {
+      console.log("ℹ️  Remote branch not found (nothing to delete).");
+    }
+  } catch (error) {
+    console.error(`⚠️  Warning: Could not delete remote branch '${featureBranch}': ${error}`);
+  }
+
+  console.log("🎉 Feature branch successfully promoted directly to main!");
+}
+
+// --------------------
 // Develop -> Main
 // --------------------
 function promoteDevelopToMain(): void {
@@ -220,6 +314,15 @@ function branchExistsOnRemote(branch: string): boolean {
   try {
     const out = execSync(`git ls-remote --heads origin ${branch}`, { encoding: "utf-8", stdio: "pipe" }).trim();
     return out.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+function branchExistsLocal(branch: string): boolean {
+  try {
+    execSync(`git show-ref --verify --quiet refs/heads/${branch}`);
+    return true;
   } catch {
     return false;
   }
