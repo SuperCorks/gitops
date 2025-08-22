@@ -19,9 +19,9 @@ const argv = yargs(hideBin(process.argv))
     conflicts: "local"
   })
   .option("local", {
-    alias: "l", 
-    type: "boolean",
-    description: "Install aliases locally for current repository only",
+  alias: "l",
+  type: "boolean",
+  description: "Install aliases locally for current repository only",
     conflicts: "global"
   })
   .check((argv) => {
@@ -66,8 +66,8 @@ const aliases = [
   },
   {
     name: "wip",
-    command: "!npx --package @supercorks/gitops git-wip",
-    description: "Create a WIP commit and optionally push"
+  command: "!npx --package @supercorks/gitops git-wip",
+  description: "Create a WIP commit and optionally push (use --no-push to skip)"
   }
 ];
 

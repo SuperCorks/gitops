@@ -20,6 +20,8 @@ function isProtectedBranch(branch: string): boolean {
 }
 
 // yargs parsing for flags + optional commit message positional args
+// NOTE: We define a positive "push" flag (default true) so that standard yargs negation (--no-push) works reliably.
+// Previous implementation used an option literally named "no-push" which conflicts with yargs' built-in --no-* handling.
 const argv = yargs(hideBin(process.argv))
   .usage(
     "Usage: git wip [options] [commit message]\n\n" +
@@ -27,15 +29,14 @@ const argv = yargs(hideBin(process.argv))
       "  git wip\n" +
       "  git wip 'WIP: refactor auth flow'\n" +
       "  git wip --no-push 'temp: debug android build'\n\n" +
-      "Creates a quick WIP commit (git add .; git commit -m <message>) and optionally pushes.\n" +
-      "Skipped on protected branches main/develop. Default commit message is 'wip'.\n" +
+      "Creates a quick WIP commit (git add .; git commit -m <message>) and optionally pushes (default on).\n" +
+      "Use --no-push to skip pushing. Default commit message is 'wip'.\n" +
       "By default a second line '[skip ci]' is added to prevent CI runs. Use --ci to omit it."
   )
-  .option("no-push", {
-    alias: "np",
+  .option("push", {
     type: "boolean",
-    description: "Skip pushing after creating the WIP commit",
-    default: false,
+    default: true,
+    description: "Push after committing (disable with --no-push)",
   })
   .option("ci", {
     type: "boolean",
@@ -46,8 +47,10 @@ const argv = yargs(hideBin(process.argv))
   .alias("help", "h")
   .parseSync();
 
+  
 function shouldPush(): boolean {
-  return !argv["no-push"];
+  // With positive "push" option, --no-push sets argv.push === false (standard yargs behavior)
+  return Boolean((argv as any).push);
 }
 
 function hasUpstream(): boolean {
