@@ -145,10 +145,13 @@ Usage:
 git wip            # Adds all, commits with message "wip", and pushes
 git wip --no-push  # Skips pushing
 git wip -np        # Short flag for --no-push
-git wip "refactor auth flow"        # Custom commit message
-git wip -np "debug android build"  # Combine flag + custom message
-git wip --ci       # Run CI for the WIP commit (omit automatic [skip ci])
-git wip --ci "temp instrumentation"  # Custom message without skipping CI
+git wip "refactor auth flow"            # Custom commit message
+git wip -np "debug android build"       # Combine flag + custom message
+git wip --ci                            # Run CI for the WIP commit (omit automatic [skip ci])
+git wip --ci "temp instrumentation"     # Custom message without skipping CI
+git wip -ci "temp instrumentation"      # Single-dash shortcut for --ci
+git wip --no-verify "spike: try idea"   # Skip hooks (pre-commit / commit-msg)
+git wip -nh "spike: try idea"           # Alias for --no-verify (no hooks)
 ```
 
 Features:
@@ -160,6 +163,8 @@ Features:
 - Exits gracefully if there's nothing to commit
 - Adds a second line `[skip ci]` to the commit message by default to avoid triggering CI pipelines
 - Pass `--ci` to suppress the automatic `[skip ci]` line when you do want CI to run
+- Supports single-dash shortcut `-ci` as an alternative to `--ci`
+- Skip git hooks with `--no-verify` (or the shorthand `-nh` for "no hooks")
 
 ### ⚙️ git-install-aliases
 Install git aliases for all GitOps commands with configurable scope.

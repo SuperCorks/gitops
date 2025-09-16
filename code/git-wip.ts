@@ -20,9 +20,18 @@ function isProtectedBranch(branch: string): boolean {
 }
 
 // yargs parsing for flags + optional commit message positional args
-// NOTE: We define a positive "push" flag (default true) so that standard yargs negation (--no-push) works reliably.
-// Previous implementation used an option literally named "no-push" which conflicts with yargs' built-in --no-* handling.
-const argv = yargs(hideBin(process.argv))
+// NOTE:
+//  * We define a positive "push" flag (default true) so that standard yargs negation (--no-push) works reliably.
+//  * We also expose a positive "verify" flag (default true) so users can pass --no-verify to skip git hooks.
+//  * Support convenience short forms:
+//      - "-ci"  -> --ci
+//      - "-nh"  -> --no-verify ("no hooks")
+const normalizedArgv = hideBin(process.argv).map((a) => {
+  if (a === "-ci") return "--ci";
+  if (a === "-nh") return "--no-verify";
+  return a;
+});
+const argv = yargs(normalizedArgv)
   .usage(
     "Usage: git wip [options] [commit message]\n\n" +
       "Examples:\n" +
@@ -31,12 +40,18 @@ const argv = yargs(hideBin(process.argv))
       "  git wip --no-push 'temp: debug android build'\n\n" +
       "Creates a quick WIP commit (git add .; git commit -m <message>) and optionally pushes (default on).\n" +
       "Use --no-push to skip pushing. Default commit message is 'wip'.\n" +
-      "By default a second line '[skip ci]' is added to prevent CI runs. Use --ci to omit it."
+    "By default a second line '[skip ci]' is added to prevent CI runs. Use --ci (or -ci) to omit it.\n" +
+    "Use --no-verify (or -nh) to skip pre-commit / commit-msg hooks."
   )
   .option("push", {
     type: "boolean",
     default: true,
     description: "Push after committing (disable with --no-push)",
+  })
+  .option("verify", {
+    type: "boolean",
+    default: true,
+    description: "Run git hooks (use --no-verify or -nh to skip pre-commit / commit-msg hooks)",
   })
   .option("ci", {
     type: "boolean",
@@ -97,11 +112,13 @@ function main() {
     console.log("➕ Adding changes (git add .)...");
     execSync("git add .", { stdio: "inherit" });
 
+    const commitArgs = ["commit", "-m", commitMessage];
+    if ((argv as any).verify === false) commitArgs.push("--no-verify");
     console.log(
-      `📝 Committing (git commit -m "${commitMessageRaw}"${appendSkipCi ? " + [skip ci]" : ""})...`
+      `📝 Committing (git ${commitArgs.join(" ")}${appendSkipCi ? " (with [skip ci])" : ""})...`
     );
     try {
-      const commitResult = spawnSync("git", ["commit", "-m", commitMessage], { stdio: "inherit" });
+      const commitResult = spawnSync("git", commitArgs, { stdio: "inherit" });
       if (commitResult.status !== 0) {
         const status = commitResult.status ?? 1;
         // We can't easily capture output with inherit, so run a lightweight status check for no-op commit.
