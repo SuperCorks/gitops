@@ -75,9 +75,15 @@ switch (scriptName) {
       .usage('Usage: git-wip [--no-push|-np]\n\nCreate a quick WIP commit and optionally push it (skips push with --no-push or -np).');
     require('./git-wip');
     break;
+  case 'git-acp':
+    // Configure yargs for git-acp
+    commonYargs
+      .usage('Usage: git-acp <commit message>\n\nStage all changes, commit with the provided message, then push. Prompts for confirmation on main.');
+    require('./git-acp');
+    break;
     
   default:
     console.error(`Unknown command: ${scriptName}`);
-    console.error('Available commands: git-promote, git-cleanup, git-done, git-release-notes, git-install-aliases, git-wip');
+  console.error('Available commands: git-promote, git-cleanup, git-done, git-release-notes, git-install-aliases, git-wip, git-acp');
     process.exit(1);
 }

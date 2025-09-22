@@ -68,6 +68,11 @@ const aliases = [
     name: "wip",
   command: "!npx --package @supercorks/gitops git-wip",
   description: "Create a WIP commit and optionally push (use --no-push to skip)"
+  },
+  {
+    name: "acp",
+    command: "!npx --package @supercorks/gitops git-acp",
+    description: "Add, commit (message required), and push changes (prompts on main)"
   }
 ];
 

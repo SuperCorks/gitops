@@ -9,6 +9,7 @@ A comprehensive suite of Git operations to streamline your development workflow 
 - ✅ [git done](#-git-done) - Streamline cleanup workflow after feature branch merge
 - 📋 [git release-notes](#-git-release-notes) - Generate release notes and semantic versions
 - ✍️ [git wip](#-git-wip) - Quick WIP commit and optional push (blocked on main/develop)
+- 💨 [git acp](#-git-acp) - Add, commit, and push (with message)
 
 
 ## Installation & Usage
@@ -29,6 +30,7 @@ git cleanup
 git done
 git release-notes
 git wip
+git acp
 ```
 
 
@@ -165,6 +167,32 @@ Features:
 - Pass `--ci` to suppress the automatic `[skip ci]` line when you do want CI to run
 - Supports single-dash shortcut `-ci` as an alternative to `--ci`
 - Skip git hooks with `--no-verify` (or the shorthand `-nh` for "no hooks")
+
+### 💨 git acp
+Stage all changes, create a commit with your provided message, and push the branch. If you are on `main`, an explicit confirmation (`yes`) is required to reduce accidental direct commits.
+
+Usage:
+```bash
+git acp "feat: add telemetry collection"
+git acp "fix: correct null pointer in auth"
+git acp -y "chore: skip confirmation"
+```
+
+Behavior:
+1. Runs `git add .`
+2. Commits with the exact message you provide (message is required)
+3. Pushes the branch (sets upstream if it doesn't exist yet)
+4. Confirmation:
+	- On `main`: must type `yes` (unless `--yes/-y` provided)
+	- On other branches: press Enter or type `y`/`yes` to continue (unless `--yes/-y` provided)
+5. If there is nothing to commit, exits gracefully without pushing
+
+Notes:
+- Skip interactive confirmation with `--yes` / `-y` (use responsibly, especially on `main`)
+- Does not append `[skip ci]` (use `git wip` if you want automatic CI skipping)
+- Intended for quick conventional commits while iterating
+- Safeguard for `main` helps prevent accidental direct commits; other branches still ask but default to yes
+
 
 ### ⚙️ git-install-aliases
 Install git aliases for all GitOps commands with configurable scope.
@@ -315,4 +343,15 @@ git config --global alias.cleanup '!npx git-cleanup'
 git config --global alias.done '!npx git-done'
 git config --global alias.release-notes '!npx git-release-notes'
 git config --global alias.wip '!npx git-wip'
+```
+
+
+## Developer Guide
+
+When developing, simply run `npm run build` and use `npx` to run local commands.
+```shell
+npx git-acp "feat: new changes to gitops"
+npx git-promote
+npx git propagate
+# ...
 ```
