@@ -168,7 +168,6 @@ Features:
 - Supports single-dash shortcut `-ci` as an alternative to `--ci`
 - Skip git hooks with `--no-verify` (or the shorthand `-nh` for "no hooks")
 
-### ⚙️ git-install-aliases
 ### 💨 git acp
 Stage all changes, create a commit with your provided message, and push the branch. If you are on `main`, an explicit confirmation (`yes`) is required to reduce accidental direct commits.
 
@@ -194,6 +193,8 @@ Notes:
 - Intended for quick conventional commits while iterating
 - Safeguard for `main` helps prevent accidental direct commits; other branches still ask but default to yes
 
+
+### ⚙️ git-install-aliases
 Install git aliases for all GitOps commands with configurable scope.
 
 **Usage:**
