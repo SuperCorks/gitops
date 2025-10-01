@@ -98,6 +98,7 @@ async function main() {
   const color = (c: string) => (supportsColor ? c : "");
   const RESET = color("\x1b[0m");
   const MAGENTA = color("\x1b[35m");
+  const GREEN = color("\x1b[32m");
   console.log(`Adding, committing and pushing with message: \n${MAGENTA}"${commitMessage}"${RESET}\n`);
 
   console.log(`➕ Staging changes (git add .) ...`);
@@ -148,7 +149,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log("🎉 acp complete.");
+  console.log(`\n${GREEN}🎉 git acp complete with message: "${commitMessage}"${RESET}`);
 }
 
 main().catch(err => {
