@@ -31,7 +31,7 @@ git cleanup
 git done
 git release-notes
 git wip
-git acp
+git acp "feat: my cool commit"
 git feat "my cool idea"
 ```
 
