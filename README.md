@@ -10,6 +10,7 @@ A comprehensive suite of Git operations to streamline your development workflow 
 - 📋 [git release-notes](#-git-release-notes) - Generate release notes and semantic versions
 - ✍️ [git wip](#-git-wip) - Quick WIP commit and optional push (blocked on main/develop)
 - 💨 [git acp](#-git-acp) - Add, commit, and push (with message)
+- 🌱 [git feat](#-git-feat) - Create a semantic feature branch from develop/main
 
 
 ## Installation & Usage
@@ -31,6 +32,7 @@ git done
 git release-notes
 git wip
 git acp
+git feat "my cool idea"
 ```
 
 
@@ -193,6 +195,27 @@ Notes:
 - Intended for quick conventional commits while iterating
 - Safeguard for `main` helps prevent accidental direct commits; other branches still ask but default to yes
 
+### 🌱 git feat
+Create a new feature branch with a semantic name derived from your message. Must be run from `develop` or `main`.
+
+Usage:
+```bash
+# Default type is feat
+git feat my new awesome feature        # => feat/my-new-awesome-feature
+
+# Override type with a prefix
+git feat ci: update github workflow    # => ci/update-github-workflow
+git feat fix: address NPE on login     # => fix/address-npe-on-login
+```
+
+Behavior:
+- Works only on `develop` or `main`
+- Checks if your base branch is up to date with origin; if not, asks to update first (Y/n)
+- Parses type prefix (`<type>: `) when provided; otherwise uses `feat`
+- Supported types: `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert`
+- Errors if an unsupported type is provided
+- Creates the branch locally and switches to it; you can push with `git push -u origin <branch>`
+
 
 ### ⚙️ git-install-aliases
 Install git aliases for all GitOps commands with configurable scope.
@@ -239,6 +262,8 @@ npx --package @supercorks/gitops git-done
 npx --package @supercorks/gitops git-release-notes
 npx --package @supercorks/gitops git-install-aliases
 npx --package @supercorks/gitops git-wip
+npx --package @supercorks/gitops git-acp
+npx --package @supercorks/gitops git-feat
 ```
 
 **Pros:** Always uses latest version, no installation required  
@@ -335,6 +360,8 @@ git config --global alias.cleanup '!npx --package @supercorks/gitops git-cleanup
 git config --global alias.done '!npx --package @supercorks/gitops git-done'
 git config --global alias.release-notes '!npx --package @supercorks/gitops git-release-notes'
 git config --global alias.wip '!npx --package @supercorks/gitops git-wip'
+git config --global alias.acp '!npx --package @supercorks/gitops git-acp'
+git config --global alias.feat '!npx --package @supercorks/gitops git-feat'
 
 # For local/global installation users (shorter)
 git config --global alias.promote '!npx git-promote'
@@ -343,6 +370,8 @@ git config --global alias.cleanup '!npx git-cleanup'
 git config --global alias.done '!npx git-done'
 git config --global alias.release-notes '!npx git-release-notes'
 git config --global alias.wip '!npx git-wip'
+git config --global alias.acp '!npx git-acp'
+git config --global alias.feat '!npx git-feat'
 ```
 
 

@@ -81,9 +81,15 @@ switch (scriptName) {
       .usage('Usage: git-acp <commit message>\n\nStage all changes, commit with the provided message, then push. Prompts for confirmation on main.');
     require('./git-acp');
     break;
+  case 'git-feat':
+    // Configure yargs for git-feat
+    commonYargs
+      .usage('Usage: git-feat <semantic message>\n\nCreate a feature branch from develop or main using semantic naming (e.g., feat/my-new-feature).');
+    require('./git-feat');
+    break;
     
   default:
     console.error(`Unknown command: ${scriptName}`);
-  console.error('Available commands: git-promote, git-cleanup, git-done, git-release-notes, git-install-aliases, git-wip, git-acp');
+  console.error('Available commands: git-promote, git-cleanup, git-done, git-release-notes, git-install-aliases, git-wip, git-acp, git-feat');
     process.exit(1);
 }

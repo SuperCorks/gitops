@@ -73,6 +73,11 @@ const aliases = [
     name: "acp",
     command: "!npx --package @supercorks/gitops git-acp",
     description: "Add, commit (message required), and push changes (prompts on main)"
+  },
+  {
+    name: "feat",
+    command: "!npx --package @supercorks/gitops git-feat",
+    description: "Create a semantic feature branch from develop or main"
   }
 ];
 

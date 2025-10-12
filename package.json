@@ -25,7 +25,8 @@
     "git-release-notes": "build/git-release-notes.js",
     "git-install-aliases": "build/git-install-aliases.js",
     "git-wip": "build/git-wip.js",
-    "git-acp": "build/git-acp.js"
+    "git-acp": "build/git-acp.js",
+    "git-feat": "build/git-feat.js"
   },
   "files": [
     "build"
