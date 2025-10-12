@@ -18,7 +18,16 @@ yargs(hideBin(process.argv))
 // that have been deleted on the remote. It fetches the latest remote information,
 // identifies branches marked as [gone], and safely removes them.
 
-// Run the cleanup process
+// Always fetch and prune first to ensure [gone] status is accurate
+try {
+  console.log("Fetching and pruning remote branches...");
+  execSync("git fetch --prune", { stdio: "inherit" });
+} catch (error) {
+  console.error("Error during fetch and prune:", error);
+  process.exit(1);
+}
+
+// Run the cleanup process using fresh remote info
 const branchOutput = execSync("git branch -vv", { encoding: "utf-8" });
 const goneBranches = findGoneBranches(branchOutput);
 
@@ -50,15 +59,6 @@ function findGoneBranches(branchOutput: string): string[] {
 }
 
 function deleteBranches(branches: string[]): void {
-  // Fetch and prune first
-  try {
-    console.log("Fetching and pruning remote branches...");
-    execSync("git fetch --prune", { stdio: "inherit" });
-  } catch (error) {
-    console.error("Error during fetch and prune:", error);
-    process.exit(1);
-  }
-
   // Delete branches
   branches.forEach((branch) => {
     try {
