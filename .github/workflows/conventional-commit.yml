@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Validate PR Title
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
             // Retrieve the PR title from the event payload
