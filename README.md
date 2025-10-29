@@ -146,29 +146,33 @@ Create a quick "work in progress" snapshot on your current branch.
 
 Usage:
 ```bash
-git wip            # Adds all, commits with message "wip", and pushes
-git wip --no-push  # Skips pushing
-git wip -np        # Short flag for --no-push
-git wip "refactor auth flow"            # Custom commit message
-git wip -np "debug android build"       # Combine flag + custom message
-git wip --ci                            # Run CI for the WIP commit (omit automatic [skip ci])
-git wip --ci "temp instrumentation"     # Custom message without skipping CI
-git wip -ci "temp instrumentation"      # Single-dash shortcut for --ci
-git wip --no-verify "spike: try idea"   # Skip hooks (pre-commit / commit-msg)
-git wip -nh "spike: try idea"           # Alias for --no-verify (no hooks)
+# Basics
+git wip                                   # Adds all, commits with message "wip", and pushes
+git wip --no-push                         # Skips pushing
+git wip -np                               # Short flag for --no-push
+git wip commit message                    # WIP with "commit message" as the message
+
+# Skipping CI and hooks (order doesn't matter)
+git wip --skip ci                         # Append [skip ci]
+git wip --skip hooks ci                   # Skip hooks and append [skip ci]
+git wip --skip hooks ci "message"         # Skip hooks/ci and use custom message
+
+# Ambiguity-safe conventional commit message
+git wip --skip hooks ci ci: conventional commit message
+# => commits with message "ci: conventional commit message" and skips hooks + ci
+
+# Back-compat shortcuts (optional)
+git wip -nh "spike: try idea"             # Alias for --skip hooks (no hooks)
 ```
 
 Features:
 - Runs: git add . ; git commit -m <message> ; git push (unless --no-push/-np)
 - Default commit message is "wip" if none provided
 - Supports custom multi-word commit messages as positional args
-- Safely handles single quotes inside your message
 - Fails on protected branches main or develop
 - Exits gracefully if there's nothing to commit
-- Adds a second line `[skip ci]` to the commit message by default to avoid triggering CI pipelines
-- Pass `--ci` to suppress the automatic `[skip ci]` line when you do want CI to run
-- Supports single-dash shortcut `-ci` as an alternative to `--ci`
-- Skip git hooks with `--no-verify` (or the shorthand `-nh` for "no hooks")
+- New default: CI is NOT skipped unless you pass `--skip ci`
+- Skip git hooks with `--skip hooks` (legacy `--no-verify` and `-nh` also work)
 
 ### 💨 git acp
 Stage all changes, create a commit with your provided message, and push the branch. If you are on `main`, an explicit confirmation (`yes`) is required to reduce accidental direct commits.

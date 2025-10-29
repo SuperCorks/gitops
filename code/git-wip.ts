@@ -20,15 +20,16 @@ function isProtectedBranch(branch: string): boolean {
 }
 
 // yargs parsing for flags + optional commit message positional args
-// NOTE:
-//  * We define a positive "push" flag (default true) so that standard yargs negation (--no-push) works reliably.
-//  * We also expose a positive "verify" flag (default true) so users can pass --no-verify to skip git hooks.
-//  * Support convenience short forms:
-//      - "-ci"  -> --ci
-//      - "-nh"  -> --no-verify ("no hooks")
+// New behavior:
+//  * Default does NOT skip CI. To skip, use: --skip ci
+//  * To skip hooks, use: --skip hooks (equivalent to --no-verify)
+//  * Combine: --skip hooks ci (order doesn't matter)
+//  * Message is any remaining positional args
+// Back-compat conveniences:
+//  * "-nh"        -> --skip=hooks (historical shorthand for no hooks)
+//  * "--no-verify" still supported and maps to skip hooks
 const normalizedArgv = hideBin(process.argv).map((a) => {
-  if (a === "-ci") return "--ci";
-  if (a === "-nh") return "--no-verify";
+  if (a === "-nh") return "--skip=hooks";
   return a;
 });
 const argv = yargs(normalizedArgv)
@@ -36,31 +37,37 @@ const argv = yargs(normalizedArgv)
     "Usage: git wip [options] [commit message]\n\n" +
       "Examples:\n" +
       "  git wip\n" +
-      "  git wip 'WIP: refactor auth flow'\n" +
-      "  git wip --no-push 'temp: debug android build'\n\n" +
+      "  git wip --skip ci\n" +
+      "  git wip --skip hooks ci\n" +
+      "  git wip --skip hooks ci \"message\"\n" +
+      "  git wip commit message\n\n" +
       "Creates a quick WIP commit (git add .; git commit -m <message>) and optionally pushes (default on).\n" +
       "Use --no-push to skip pushing. Default commit message is 'wip'.\n" +
-    "By default a second line '[skip ci]' is added to prevent CI runs. Use --ci (or -ci) to omit it.\n" +
-    "Use --no-verify (or -nh) to skip pre-commit / commit-msg hooks."
+      "Use --skip ci to append [skip ci]. Use --skip hooks to pass --no-verify to git commit."
   )
   .option("push", {
     type: "boolean",
     default: true,
     description: "Push after committing (disable with --no-push)",
   })
+  .option("skip", {
+    type: "array",
+    string: true as any,
+    description: "Skip certain steps: one or more of: hooks, ci",
+  })
   .option("verify", {
     type: "boolean",
     default: true,
-    description: "Run git hooks (use --no-verify or -nh to skip pre-commit / commit-msg hooks)",
-  })
-  .option("ci", {
-    type: "boolean",
-    description: "Include this WIP commit in CI (omit automatic [skip ci] second line)",
-    default: false,
+    description: "Run git hooks (legacy: --no-verify is equivalent to --skip hooks)",
   })
   .help()
   .alias("help", "h")
-  .parseSync();
+  .parseSync() as unknown as {
+    _: (string | number)[];
+    push: boolean;
+    skip?: (string | number)[];
+    verify: boolean;
+  };
 
   
 function shouldPush(): boolean {
@@ -101,11 +108,14 @@ function main() {
 
   console.log("💾 Saving WIP on branch:", branch);
 
+  // Determine skip settings
+  const skipVals = new Set((argv.skip ?? []).map((v) => String(v).toLowerCase()));
+  const skipHooks = skipVals.has("hooks") || (argv as any).verify === false; // support --no-verify
+  const skipCi = skipVals.has("ci");
+
   // Build commit message from remaining positional args. Join so multiple words become one message.
-  const commitMessageRaw = argv._.length ? argv._.join(" ") : "wip";
-  const appendSkipCi = !argv.ci;
-  // Ensure [skip ci] becomes exactly the second line (no blank spacer line)
-  const commitMessage = appendSkipCi ? `${commitMessageRaw}\n[skip ci]` : commitMessageRaw;
+  const commitMessageRaw = argv._.length ? String(argv._.join(" ")) : "wip";
+  const commitMessage = skipCi ? `${commitMessageRaw}\n[skip ci]` : commitMessageRaw;
   // Use spawnSync with arg array instead of shell quoting for cross-platform safety (Windows CMD needs double quotes).
 
   try {
@@ -113,9 +123,9 @@ function main() {
     execSync("git add .", { stdio: "inherit" });
 
     const commitArgs = ["commit", "-m", commitMessage];
-    if ((argv as any).verify === false) commitArgs.push("--no-verify");
+    if (skipHooks) commitArgs.push("--no-verify");
     console.log(
-      `📝 Committing (git ${commitArgs.join(" ")}${appendSkipCi ? " (with [skip ci])" : ""})...`
+      `📝 Committing (git ${commitArgs.join(" ")}${skipCi ? " (with [skip ci])" : ""})...`
     );
     try {
       const commitResult = spawnSync("git", commitArgs, { stdio: "inherit" });
