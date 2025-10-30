@@ -2,7 +2,7 @@
 
 import path from 'path';
 import fs from 'fs';
-import yargs from 'yargs';
+import yargs from 'yargs/yargs';
 import { hideBin } from 'yargs/helpers';
 
 // Read version from package.json
