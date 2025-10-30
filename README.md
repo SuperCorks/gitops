@@ -388,3 +388,18 @@ npx git-promote
 npx git propagate
 # ...
 ```
+
+## Testing
+
+This repo uses Vitest for tests.
+
+```bash
+# Install dependencies
+npm install
+
+# Run the full test suite
+npm test
+
+# Watch mode during development
+npm run test:watch
+```
