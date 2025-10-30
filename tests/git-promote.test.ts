@@ -82,22 +82,11 @@ describe('git promote', () => {
 
     // Create feature from remote develop tip explicitly
     const co = run('git', ['checkout', '-B', 'feat/remote-develop', 'origin/develop'], repo);
-    if (co.status !== 0) {
-      // eslint-disable-next-line no-console
-      console.error('failed to checkout feature from origin/develop:', co.stderrStr);
-    }
     write(repo, 'r.txt', 'r');
     run('git', ['add', '.'], repo);
     run('git', ['commit', '-m', 'feat: remote develop feature'], repo);
 
     const res = runPromote(repo, ['feat: squash to develop']);
-    if (res.status !== 0) {
-      // Helpful diagnostics in CI
-      // eslint-disable-next-line no-console
-      console.error('git-promote stdout:\n' + res.stdoutStr);
-      // eslint-disable-next-line no-console
-      console.error('git-promote stderr:\n' + res.stderrStr);
-    }
     expect(res.status).toBe(0);
     // Now should be on develop and have the squash message
     expect(currentBranch(repo)).toBe('develop');
