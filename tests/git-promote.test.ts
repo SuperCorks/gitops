@@ -66,28 +66,26 @@ describe('git promote', () => {
   });
 
   it('feature -> develop when develop exists only on remote', () => {
-    // Create bare and a separate clone to create remote-only develop
+    // Create repo and remote
     const repo = initRepo();
-    const remote = addOrigin(repo);
-    // Create remote-only develop using a separate working clone
-    const { spawnSync } = require('node:child_process');
-    const { tmpdir } = require('node:os');
-    const { mkdtempSync } = require('node:fs');
-    const { join } = require('node:path');
-    const work = mkdtempSync(join(tmpdir(), 'gitops-promote-'));
-    spawnSync('git', ['clone', remote, work], { stdio: 'ignore' });
-    // In the clone, make sure there's at least one commit on develop
-    spawnSync('git', ['-C', work, 'checkout', '-B', 'develop'], { stdio: 'ignore' });
-    const fs = require('node:fs');
-    fs.writeFileSync(require('node:path').join(work, 'base.txt'), 'base\n');
-    spawnSync('git', ['-C', work, 'add', '.'], { stdio: 'ignore' });
-    spawnSync('git', ['-C', work, 'commit', '-m', 'chore: base'], { stdio: 'ignore' });
-    spawnSync('git', ['-C', work, 'push', '-u', 'origin', 'develop'], { stdio: 'ignore' });
+    addOrigin(repo);
 
-  // In original repo, fetch only (no local develop yet)
-  run('git', ['fetch', 'origin', 'develop:develop'], repo);
-  // Create feature from develop tip explicitly
-  run('git', ['checkout', '-B', 'feat/remote-develop', 'develop'], repo);
+    // Create develop locally, add a base commit, push, then delete local develop to simulate remote-only develop
+    run('git', ['checkout', '-B', 'develop'], repo);
+    write(repo, 'base.txt', 'base\n');
+    run('git', ['add', '.'], repo);
+    run('git', ['commit', '-m', 'chore: base'], repo);
+    run('git', ['push', '-u', 'origin', 'develop'], repo);
+    // Ensure no local develop remains
+    run('git', ['checkout', 'main'], repo);
+    run('git', ['branch', '-D', 'develop'], repo);
+
+    // Create feature from remote develop tip explicitly
+    const co = run('git', ['checkout', '-B', 'feat/remote-develop', 'origin/develop'], repo);
+    if (co.status !== 0) {
+      // eslint-disable-next-line no-console
+      console.error('failed to checkout feature from origin/develop:', co.stderrStr);
+    }
     write(repo, 'r.txt', 'r');
     run('git', ['add', '.'], repo);
     run('git', ['commit', '-m', 'feat: remote develop feature'], repo);
