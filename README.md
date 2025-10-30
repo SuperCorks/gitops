@@ -403,3 +403,5 @@ npm test
 # Watch mode during development
 npm run test:watch
 ```
+
+Tested Node versions: 18, 20, and 22 (via CI matrix). If you use nvm, an `.nvmrc` is provided (20).

@@ -5,12 +5,12 @@ import { spawnSync, SpawnSyncReturns } from 'node:child_process';
 
 export type CmdResult = SpawnSyncReturns<Buffer> & { stdoutStr: string; stderrStr: string };
 
-export function run(cmd: string, args: string[], cwd: string, env?: NodeJS.ProcessEnv): CmdResult {
+export function run(cmd: string, args: string[], cwd: string, env?: NodeJS.ProcessEnv, input?: string | Buffer): CmdResult {
   const res = spawnSync(cmd, args, {
     cwd,
     env: { ...process.env, ...env },
     stdio: 'pipe',
-    encoding: 'buffer',
+    input,
   });
   const stdoutStr = (res.stdout || Buffer.alloc(0)).toString('utf-8');
   const stderrStr = (res.stderr || Buffer.alloc(0)).toString('utf-8');
@@ -71,6 +71,15 @@ export function addOrigin(repoDir: string, bareDir?: string): string {
   return remoteDir;
 }
 
+export function cloneFromBare(bareDir: string): string {
+  const work = tmpDir('gitops-clone-');
+  run('git', ['clone', bareDir, work], process.cwd());
+  // Configure user for non-interactive commits
+  run('git', ['config', 'user.email', 'you@example.com'], work);
+  run('git', ['config', 'user.name', 'Your Name'], work);
+  return work;
+}
+
 export function remoteHasBranch(remoteDir: string, ref: string): boolean {
   const result = run('git', ['--git-dir', remoteDir, 'rev-parse', '--verify', `refs/heads/${ref}`], process.cwd());
   return result.status === 0 && /^[0-9a-f]{40}\n?$/.test(result.stdoutStr);
@@ -85,4 +94,29 @@ export function upstream(repoDir: string): string | null {
 export function runWip(repoDir: string, args: string[] = []): CmdResult {
   const cli = resolve(__dirname, '..', 'build', 'git-wip.js');
   return run(process.execPath, [cli, ...args], repoDir);
+}
+
+export function runAcp(repoDir: string, args: string[] = [], input?: string | Buffer): CmdResult {
+  const cli = resolve(__dirname, '..', 'build', 'git-acp.js');
+  return run(process.execPath, [cli, ...args], repoDir, undefined, input);
+}
+
+export function runFeat(repoDir: string, args: string[] = [], input?: string | Buffer): CmdResult {
+  const cli = resolve(__dirname, '..', 'build', 'git-feat.js');
+  return run(process.execPath, [cli, ...args], repoDir, undefined, input);
+}
+
+export function setLocalGitAlias(repoDir: string, name: string, command: string) {
+  // Set a local alias like: git config alias.cleanup '!node /path/to/build/git-cleanup.js'
+  run('git', ['config', 'alias.' + name, command], repoDir);
+}
+
+export function runPropagate(repoDir: string, args: string[] = [], input?: string | Buffer): CmdResult {
+  const cli = resolve(__dirname, '..', 'build', 'git-propagate.js');
+  return run(process.execPath, [cli, ...args], repoDir, undefined, input);
+}
+
+export function runPromote(repoDir: string, args: string[] = [], input?: string | Buffer): CmdResult {
+  const cli = resolve(__dirname, '..', 'build', 'git-promote.js');
+  return run(process.execPath, [cli, ...args], repoDir, undefined, input);
 }
