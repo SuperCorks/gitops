@@ -23,13 +23,12 @@ export function tmpDir(prefix = 'gitops-wip-'): string {
 
 export function initRepo(baseDir?: string, initBranch?: string): string {
   const dir = baseDir ?? tmpDir();
-  run('git', ['init'], dir);
+  // Initialize repo with a deterministic initial branch to avoid env-specific defaults (e.g., master vs main)
+  const initial = initBranch ?? 'main';
+  run('git', ['init', '-b', initial], dir);
   // Configure user for non-interactive commits
   run('git', ['config', 'user.email', 'you@example.com'], dir);
   run('git', ['config', 'user.name', 'Your Name'], dir);
-  if (initBranch) {
-    run('git', ['checkout', '-B', initBranch], dir);
-  }
   // Initial commit so HEAD exists
   writeFileSync(join(dir, 'README.md'), '# temp repo\n');
   run('git', ['add', '.'], dir);
