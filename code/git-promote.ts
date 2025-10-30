@@ -81,9 +81,8 @@ function promoteFeatureToDevelop(featureBranch: string, commitMessage: string): 
   // Step 3: ensure develop is not ahead of the feature branch
   console.log("🔍 Checking that develop is contained in feature branch...");
   if (!isAncestor("develop", featureBranch)) {
-    console.error("❌ Error: develop has commits not present in your feature branch.");
-    console.error("💡 Please run 'git merge develop' (or rebase) on your feature branch, resolve conflicts, then retry.");
-    process.exit(1);
+    console.warn("⚠️  Warning: develop has commits not present in your feature branch.");
+    console.warn("💡 Proceeding with squash merge; if conflicts arise, resolve them and commit manually.");
   }
 
   // Switch to develop
@@ -169,9 +168,8 @@ function promoteFeatureToMain(featureBranch: string, commitMessage: string): voi
   // Ensure main is ancestor of feature branch
   console.log("🔍 Checking that main is contained in feature branch...");
   if (!isAncestor("main", featureBranch)) {
-    console.error("❌ Error: main has commits not present in your feature branch.");
-    console.error("💡 Please run 'git merge main' (or rebase) on your feature branch, resolve conflicts, then retry.");
-    process.exit(1);
+    console.warn("⚠️  Warning: main has commits not present in your feature branch.");
+    console.warn("💡 Proceeding with squash merge; if conflicts arise, resolve them and commit manually.");
   }
 
   // Switch to main
