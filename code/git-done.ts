@@ -60,7 +60,7 @@ function getCurrentBranch(): string {
 }
 
 function isProtectedBranch(branch: string): boolean {
-  const protectedBranches = ["main", "develop"];
+  const protectedBranches = ["main", "develop", "master"];
   return protectedBranches.includes(branch);
 }
 
@@ -107,10 +107,19 @@ function branchExistsOnRemote(branch: string): boolean {
 }
 
 function resolveTargetBaseBranch(): string {
-  // Prefer 'develop' if it exists locally or on remote; otherwise use 'main'
+  // Prefer 'develop' if it exists locally or on remote
   if (branchExistsLocally("develop") || branchExistsOnRemote("develop")) {
     return "develop";
   }
+  // Next, prefer 'main' if available
+  if (branchExistsLocally("main") || branchExistsOnRemote("main")) {
+    return "main";
+  }
+  // Finally, support 'master' as a legacy default branch
+  if (branchExistsLocally("master") || branchExistsOnRemote("master")) {
+    return "master";
+  }
+  // Default to 'main' for safety if none detected (will likely error later if it truly doesn't exist)
   return "main";
 }
 
