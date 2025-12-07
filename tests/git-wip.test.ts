@@ -45,6 +45,7 @@ describe('git wip CLI', () => {
     expect(after).not.toBe(before);
     expect(lastMessage(repo)).toBe('wip');
     expect(res.stdoutStr).toMatch(/Skipping push|WIP saved/i);
+    expect(res.stdoutStr).toMatch(/git wip complete with message: "wip"/i);
   });
 
   it('accepts a custom multi-word commit message', () => {
@@ -54,6 +55,7 @@ describe('git wip CLI', () => {
     const res = runWip(repo, ['--no-push', 'my', 'custom', 'message']);
     expectOk(res);
     expect(lastMessage(repo)).toBe('my custom message');
+    expect(res.stdoutStr).toMatch(/git wip complete with message: "my custom message"/i);
   });
 
   it('appends [skip ci] when --skip ci is provided', () => {

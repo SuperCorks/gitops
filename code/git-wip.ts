@@ -176,7 +176,9 @@ function main() {
     console.log("⏭️  Skipping push due to --no-push/-np flag.");
   }
 
-  console.log("🎉 WIP saved.");
+  const RESET = "\x1b[0m";
+  const GREEN = "\x1b[32m";
+  console.log(`${GREEN}🎉 git wip complete with message: "${commitMessage}"${RESET}`);
 }
 
 main();
