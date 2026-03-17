@@ -5,7 +5,7 @@ on:
     types: [published]
 
 env:
-  NODE_VERSION: '18'
+  NODE_VERSION: '24'
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
@@ -24,6 +24,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: npm ci
@@ -48,6 +49,8 @@ jobs:
       - name: Publish to NPM
         # Uses npm trusted publishing via GitHub Actions OIDC; no NPM token secret is required.
         run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ''
 
       - name: Create GitHub deployment status
         if: success()
