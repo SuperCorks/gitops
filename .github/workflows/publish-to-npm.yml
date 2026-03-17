@@ -6,6 +6,7 @@ on:
 
 env:
   NODE_VERSION: '18'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
   publish:
@@ -23,7 +24,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: npm ci
