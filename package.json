@@ -22,7 +22,7 @@
     "git-propagate": "build/git-propagate.js",
     "git-cleanup": "build/git-cleanup.js",
     "git-done": "build/git-done.js",
-    "git-release-notes": "build/git-release-notes.js",
+    "git-release": "build/git-release.js",
     "git-install-aliases": "build/git-install-aliases.js",
     "git-wip": "build/git-wip.js",
     "git-acp": "build/git-acp.js",

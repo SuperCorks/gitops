@@ -7,7 +7,7 @@ A comprehensive suite of Git operations to streamline your development workflow 
 - 🌊 [git propagate](#-git-propagate) - Propagate changes downstream between branches
 - 🧹 [git cleanup](#-git-cleanup) - Remove local branches deleted on remote
 - ✅ [git done](#-git-done) - Streamline cleanup workflow after feature branch merge
-- 📋 [git release-notes](#-git-release-notes) - Generate release notes and semantic versions
+- 📋 [git release](#-git-release) - Generate release links and draft releases
 - ✍️ [git wip](#-git-wip) - Quick WIP commit and optional push (blocked on main/develop)
 - 💨 [git acp](#-git-acp) - Add, commit, and push (with message)
 - 🌱 [git feat](#-git-feat) - Create a semantic feature branch from develop/main
@@ -29,7 +29,7 @@ git promote
 git propagate
 git cleanup
 git done
-git release-notes
+git release link
 git wip
 git acp "feat: my cool commit"
 git feat "my cool idea"
@@ -127,19 +127,24 @@ git done  # Must be run from a feature branch that's been merged/deleted on remo
 - Automatically runs cleanup to remove stale branches
 - Ensures a clean transition back to develop
 
-### 📋 git release-notes
-Generate release notes and calculate the next semantic version based on conventional commits.
+### 📋 git release
+Generate a release link or create a draft release based on conventional commits on `main`.
 
 **Usage:**
 ```bash
-git release-notes                    # Generate release notes from main branch
+git release link                     # Print a pre-filled GitHub release URL
+git release notes                    # Alias for `git release link`
+git release draft                    # Preview and create a draft GitHub release with `gh`
 ```
 
 **Features:**
 - Analyzes commit history using conventional commit format
 - Automatically calculates semantic version bumps (major/minor/patch)
-- Generates GitHub release URLs with pre-filled information
+- Generates GitHub release URLs with pre-filled title and body
+- Previews draft release content before creating it
+- Requires the `gh` CLI to be installed and authenticated for draft creation
 - Follows semantic versioning standards
+- Attempts to open the created draft in your browser on macOS, Linux, and Windows
 
 ### ✍️ git wip
 Create a quick "work in progress" snapshot on your current branch.
@@ -226,8 +231,8 @@ Install git aliases for all GitOps commands with configurable scope.
 
 **Usage:**
 ```bash
-npx --package @supercorks/gitops git-install-aliase --global        # Install globally for all repositories
-npx --package @supercorks/gitops git-install-aliase --local         # Install locally for current repository only
+npx --package @supercorks/gitops git-install-aliases --global       # Install globally for all repositories
+npx --package @supercorks/gitops git-install-aliases --local        # Install locally for current repository only
 ```
 
 **Features:**
@@ -242,13 +247,13 @@ npx --package @supercorks/gitops git-install-aliase --local         # Install lo
 
 These tools are designed to work together in a typical Git flow:
 
-0. **Setup**: Use `npx --package @supercorks/gitops git-install-aliase --local` to set up convenient aliases
+0. **Setup**: Use `npx --package @supercorks/gitops git-install-aliases --local` to set up convenient aliases
 1. **Development**: Work on feature branches
 2. **Completion**: Use `git done` after your PR is merged and branch deleted
 3. **Maintenance**: Use `git cleanup` regularly to remove stale branches
 4. **Feature Promotion**: Use `git promote` to move changes from develop to main
 5. **Fix Propagation**: Use `git propagate` to spread changes from main to develop or from develop to feature branches
-6. **Release**: Use `git release-notes` to generate release information
+6. **Release**: Use `git release link` to generate release information or `git release draft` to create a draft
 
 
 ## Alternative Installation Methods
@@ -263,7 +268,8 @@ npx --package @supercorks/gitops git-promote
 npx --package @supercorks/gitops git-propagate
 npx --package @supercorks/gitops git-cleanup
 npx --package @supercorks/gitops git-done
-npx --package @supercorks/gitops git-release-notes
+npx --package @supercorks/gitops git-release link
+npx --package @supercorks/gitops git-release draft
 npx --package @supercorks/gitops git-install-aliases
 npx --package @supercorks/gitops git-wip
 npx --package @supercorks/gitops git-acp
@@ -293,7 +299,8 @@ npx git-promote
 npx git-propagate
 npx git-cleanup
 npx git-done
-npx git-release-notes
+npx git-release link
+npx git-release draft
 npx git-wip
 
 # Direct execution (only from project root)
@@ -328,7 +335,8 @@ git-promote
 git-propagate
 git-cleanup
 git-done
-git-release-notes
+git-release link
+git-release draft
 git-wip
 ```
 
@@ -362,7 +370,7 @@ git config --global alias.promote '!npx --package @supercorks/gitops git-promote
 git config --global alias.propagate '!npx --package @supercorks/gitops git-propagate'
 git config --global alias.cleanup '!npx --package @supercorks/gitops git-cleanup'
 git config --global alias.done '!npx --package @supercorks/gitops git-done'
-git config --global alias.release-notes '!npx --package @supercorks/gitops git-release-notes'
+git config --global alias.release '!npx --package @supercorks/gitops git-release'
 git config --global alias.wip '!npx --package @supercorks/gitops git-wip'
 git config --global alias.acp '!npx --package @supercorks/gitops git-acp'
 git config --global alias.feat '!npx --package @supercorks/gitops git-feat'
@@ -372,7 +380,7 @@ git config --global alias.promote '!npx git-promote'
 git config --global alias.propagate '!npx git-propagate'
 git config --global alias.cleanup '!npx git-cleanup'
 git config --global alias.done '!npx git-done'
-git config --global alias.release-notes '!npx git-release-notes'
+git config --global alias.release '!npx git-release'
 git config --global alias.wip '!npx git-wip'
 git config --global alias.acp '!npx git-acp'
 git config --global alias.feat '!npx git-feat'

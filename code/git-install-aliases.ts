@@ -60,9 +60,9 @@ const aliases = [
     description: "Complete feature branch workflow"
   },
   {
-    name: "release-notes",
-    command: "!npx --package @supercorks/gitops git-release-notes",
-    description: "Generate release notes and version"
+    name: "release",
+    command: "!npx --package @supercorks/gitops git-release",
+    description: "Release management (link, draft)"
   },
   {
     name: "wip",

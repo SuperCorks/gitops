@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write # Required for npm provenance
+      id-token: write # Required for npm trusted publishing and provenance
 
     steps:
       - name: Checkout repository
@@ -46,9 +46,8 @@ jobs:
         run: npm pack --dry-run
 
       - name: Publish to NPM
+        # Uses npm trusted publishing via GitHub Actions OIDC; no NPM token secret is required.
         run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub deployment status
         if: success()

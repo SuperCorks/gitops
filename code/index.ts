@@ -38,10 +38,10 @@ switch (scriptName) {
     require('./git-done');
     break;
     
-  case 'git-release-notes':
-    // Configure yargs for git-release-notes (no additional options needed)
-    commonYargs.usage('Usage: git-release-notes\n\nGenerate release notes and calculate semantic version.');
-    require('./git-release-notes');
+  case 'git-release':
+    // Configure yargs for git-release with subcommands
+    commonYargs.usage('Usage: git release <link|draft>\n\nRelease management commands. `notes` is accepted as an alias for `link`.');
+    require('./git-release');
     break;
     
   case 'git-install-aliases':
@@ -90,6 +90,6 @@ switch (scriptName) {
     
   default:
     console.error(`Unknown command: ${scriptName}`);
-  console.error('Available commands: git-promote, git-cleanup, git-done, git-release-notes, git-install-aliases, git-wip, git-acp, git-feat');
+    console.error('Available commands: git-promote, git-cleanup, git-done, git-release, git-install-aliases, git-wip, git-acp, git-feat');
     process.exit(1);
 }

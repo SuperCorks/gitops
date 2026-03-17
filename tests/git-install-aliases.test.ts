@@ -16,6 +16,12 @@ describe('git-install-aliases', () => {
     const acp = run('git', ['config', '--local', '--get', 'alias.acp'], repo).stdoutStr.trim();
     expect(acp).toContain('npx --package @supercorks/gitops git-acp');
 
+    const release = run('git', ['config', '--local', '--get', 'alias.release'], repo).stdoutStr.trim();
+    expect(release).toContain('npx --package @supercorks/gitops git-release');
+
+    const legacyReleaseNotes = run('git', ['config', '--local', '--get', 'alias.release-notes'], repo).stdoutStr.trim();
+    expect(legacyReleaseNotes).toBe('');
+
     const list = run('git', ['config', '--local', '--get-regexp', '^alias\.'], repo).stdoutStr.trim().split('\n');
     // Expect all 8 aliases to be installed
     expect(list.length).toBeGreaterThanOrEqual(8);

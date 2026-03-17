@@ -105,6 +105,11 @@ export function runFeat(repoDir: string, args: string[] = [], input?: string | B
   return run(process.execPath, [cli, ...args], repoDir, undefined, input);
 }
 
+export function runRelease(repoDir: string, args: string[] = [], env?: NodeJS.ProcessEnv, input?: string | Buffer): CmdResult {
+  const cli = resolve(__dirname, '..', 'build', 'git-release.js');
+  return run(process.execPath, [cli, ...args], repoDir, env, input);
+}
+
 export function setLocalGitAlias(repoDir: string, name: string, command: string) {
   // Set a local alias like: git config alias.cleanup '!node /path/to/build/git-cleanup.js'
   run('git', ['config', 'alias.' + name, command], repoDir);
