@@ -18,13 +18,13 @@ A comprehensive suite of Git operations to streamline your development workflow 
 ### Quick Start (Recommended)
 
 ```bash
-# 1. Install as a development dependency
-npm install --save-dev @supercorks/gitops@latest
+# 1. Install globally
+npm install -g @supercorks/gitops@latest
 
-# 2. Set up Git aliases for your project
-npx --package @supercorks/gitops git-install-aliases --local
+# 2. Set up Git aliases globally
+git-install-aliases --global
 
-# 3. Use Git aliases for all commands
+# 3. Use Git aliases from any repository
 git promote
 git propagate
 git cleanup
@@ -36,7 +36,7 @@ git feat "my cool idea"
 ```
 
 
-_Note: For other installation methods including global installation, on-demand usage with npx, and manual alias setup, see the [Alternative Installation Methods](#alternative-installation-methods) section below._
+_Note: For other installation methods including local project installation, on-demand usage with npx, and manual alias setup, see the [Installation Options](#installation-options) section below._
 
 ## Tools Overview
 
@@ -247,7 +247,7 @@ npx --package @supercorks/gitops git-install-aliases --local        # Install lo
 
 These tools are designed to work together in a typical Git flow:
 
-0. **Setup**: Use `npx --package @supercorks/gitops git-install-aliases --local` to set up convenient aliases
+0. **Setup**: Install `@supercorks/gitops` globally and run `git-install-aliases --global` to set up convenient aliases
 1. **Development**: Work on feature branches
 2. **Completion**: Use `git done` after your PR is merged and branch deleted
 3. **Maintenance**: Use `git cleanup` regularly to remove stale branches
@@ -256,9 +256,49 @@ These tools are designed to work together in a typical Git flow:
 6. **Release**: Use `git release link` to generate release information or `git release draft` to create a draft
 
 
-## Alternative Installation Methods
+## Installation Options
 
-### Option 1: On-Demand Usage (No Installation)
+### Option 1: Global Installation (Recommended)
+
+Install globally for system-wide access and pair it with global Git aliases:
+
+```bash
+# Install globally
+npm install -g @supercorks/gitops
+
+# Or with yarn
+yarn global add @supercorks/gitops
+
+# Install aliases globally
+git-install-aliases --global
+```
+
+After global installation:
+
+```bash
+# Direct command usage
+git-promote
+git-propagate
+git-cleanup
+git-done
+git-release link
+git-release draft
+git-wip
+
+# Or use the preferred git aliases
+git promote
+git propagate
+git cleanup
+git done
+git release link
+git release draft
+git wip
+```
+
+**Pros:** Available everywhere, simple setup, works consistently across repositories  
+**Cons:** Requires global permissions
+
+### Option 2: On-Demand Usage (No Installation)
 
 Use npx to run commands without installing:
 
@@ -279,7 +319,7 @@ npx --package @supercorks/gitops git-feat
 **Pros:** Always uses latest version, no installation required  
 **Cons:** Slower execution, requires internet connection
 
-### Option 2: Local Project Installation (Alternative Usage)
+### Option 3: Local Project Installation (Alternative Usage)
 
 Install as a development dependency and use without Git aliases:
 
@@ -314,34 +354,6 @@ npm run promote  # if you add "promote": "git-promote" to scripts
 
 **Pros:** Faster execution, version consistency, works offline  
 **Cons:** Requires installation per project, longer command names
-
-### Option 3: Global Installation
-
-Install globally for system-wide access:
-
-```bash
-# Install globally
-npm install -g @supercorks/gitops
-
-# Or with yarn
-yarn global add @supercorks/gitops
-```
-
-After global installation:
-
-```bash
-# Direct command usage
-git-promote
-git-propagate
-git-cleanup
-git-done
-git-release link
-git-release draft
-git-wip
-```
-
-**Pros:** Available everywhere, simple command names  
-**Cons:** Version inconsistency across projects, requires global permissions
 
 ### Alternative Git Alias Setup
 
