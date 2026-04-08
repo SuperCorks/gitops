@@ -3,23 +3,30 @@
 import { execSync } from "child_process";
 import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
+import {
+  branchExistsLocal,
+  branchExistsOnRemote,
+  getFeaturePromotionTarget,
+  getNextPromotionTarget,
+  isFeatureBranch,
+} from "./branch-flow";
 
 // git promote now has two modes:
-// 1. From a feature branch -> develop (squash merge with provided commit message, branch deletion)
-// 2. From develop -> main (fast-forward only, existing behavior)
+// 1. From a feature branch -> nearest available integration branch (develop, staging, or main)
+// 2. From develop/staging -> next integration branch in the chain (fast-forward only)
 
 // --- Argument Parsing (yargs) ---
 // Usage patterns:
-//   git promote                   (from develop -> main)
-//   git promote "feat: add X"     (from feature -> develop, squash commit message)
+//   git promote                   (from develop/staging -> next integration branch)
+//   git promote "feat: add X"     (from feature -> develop/staging/main, squash commit message)
 //   git promote -m "feat: add X"  (alternative flag style on feature branch)
 const argv = yargs(hideBin(process.argv))
   .usage(
     "Usage:\n" +
-      "  git promote               # From develop: fast-forward main\n" +
-      "  git promote <message>     # From feature: squash merge with message\n" +
+      "  git promote               # From develop/staging: fast-forward the next branch\n" +
+      "  git promote <message>     # From feature: squash merge into develop, staging, or main\n" +
       "  git promote -m <message>  # Alternate flag for message in feature mode\n\n" +
-      "Promote changes between branches. Feature branches are squash merged into develop; develop fast-forwards into main."
+      "Promote changes between branches. Feature branches are squash merged into the nearest available integration branch; develop promotes to staging when present, otherwise main; staging promotes to main."
   )
   .option("message", {
     alias: "m",
@@ -33,32 +40,27 @@ const argv = yargs(hideBin(process.argv))
 const currentBranch = getCurrentBranch();
 const commitMessageArg = (argv.message || argv._.join(" ")).trim();
 
-if (currentBranch === "develop") {
-  // develop -> main fast-forward promotion
-  promoteDevelopToMain();
-} else if (isFeatureBranch(currentBranch)) {
-  // feature -> develop (or main if develop missing) squash merge
-  const hasDevelopLocal = branchExistsLocal("develop");
-  const hasDevelopRemote = branchExistsOnRemote("develop");
-  if (!hasDevelopLocal && !hasDevelopRemote) {
-    promoteFeatureToMain(currentBranch, commitMessageArg);
-  } else {
-    promoteFeatureToDevelop(currentBranch, commitMessageArg);
-  }
-} else if (currentBranch === "main") {
+if (currentBranch === "main") {
   console.error("❌ Error: git promote cannot be run from main branch directly");
-  console.error("💡 Run from develop to fast-forward main OR from a feature branch to squash into develop.");
+  console.error("💡 Run from develop or staging to fast-forward the next branch, or from a feature branch to squash into the nearest integration branch.");
   process.exit(1);
+} else if (isFeatureBranch(currentBranch)) {
+  promoteFeatureToBranch(currentBranch, getFeaturePromotionTarget(currentBranch), commitMessageArg);
 } else {
-  // Unknown/non-standard branch naming still allowed as 'feature' branch
-  promoteFeatureToDevelop(currentBranch, commitMessageArg);
+  const targetBranch = getNextPromotionTarget(currentBranch);
+  if (!targetBranch) {
+    console.error(`❌ Error: git promote does not support promoting from '${currentBranch}'.`);
+    process.exit(1);
+  }
+
+  promoteBranchForward(currentBranch, targetBranch);
 }
 
 // --------------------
-// Feature -> Develop
+// Feature -> Integration Branch
 // --------------------
-function promoteFeatureToDevelop(featureBranch: string, commitMessage: string): void {
-  console.log(`🚀 Promoting feature branch '${featureBranch}' to develop (squash merge)...`);
+function promoteFeatureToBranch(featureBranch: string, targetBranch: string, commitMessage: string): void {
+  console.log(`🚀 Promoting feature branch '${featureBranch}' to ${targetBranch} (squash merge)...`);
 
   if (!commitMessage) {
     console.error("❌ Error: Commit message is required when promoting a feature branch.");
@@ -68,31 +70,19 @@ function promoteFeatureToDevelop(featureBranch: string, commitMessage: string): 
 
   ensureCleanWorkingTree();
 
-  // Step 2: update develop (fetch latest into local develop without switching first)
-  console.log("🔄 Fetching latest develop branch...");
-  try {
-    execSync("git fetch origin develop:develop", { stdio: "inherit" });
-  } catch (error) {
-    console.error("❌ Error: Could not fetch develop branch.");
-    console.error("💡 Ensure 'develop' exists on remote or locally.");
-    process.exit(1);
-  }
+  ensureLocalBranchRef(targetBranch);
 
-  // Step 3: ensure develop is not ahead of the feature branch
-  console.log("🔍 Checking that develop is contained in feature branch...");
-  if (!isAncestor("develop", featureBranch)) {
-    console.warn("⚠️  Warning: develop has commits not present in your feature branch.");
+  console.log(`🔍 Checking that ${targetBranch} is contained in feature branch...`);
+  if (!isAncestor(targetBranch, featureBranch)) {
+    console.warn(`⚠️  Warning: ${targetBranch} has commits not present in your feature branch.`);
     console.warn("💡 Proceeding with squash merge; if conflicts arise, resolve them and commit manually.");
   }
 
-  // Switch to develop
-  console.log("🔀 Switching to develop branch...");
-  execSync("git checkout develop", { stdio: "inherit" });
-  console.log("🔄 Pulling latest develop from remote...");
-  execSync("git pull origin develop", { stdio: "inherit" });
+  console.log(`🔀 Switching to ${targetBranch} branch...`);
+  execSync(`git checkout ${targetBranch}`, { stdio: "inherit" });
+  updateCheckedOutBranch(targetBranch);
 
-  // Perform squash merge
-  console.log(`🔄 Squash merging '${featureBranch}' into develop...`);
+  console.log(`🔄 Squash merging '${featureBranch}' into ${targetBranch}...`);
   try {
     execSync(`git merge ${featureBranch} --no-commit --squash`, { stdio: "inherit" });
   } catch (error) {
@@ -108,13 +98,12 @@ function promoteFeatureToDevelop(featureBranch: string, commitMessage: string): 
   } catch (error: any) {
     const status = error?.status ?? 1;
     console.error("❌ git commit failed (likely pre-commit hook). Output above.");
-    console.error("💡 Fix the issue and run: git commit -m \"" + commitMessage + "\" then push develop manually.");
+    console.error(`💡 Fix the issue and run: git commit -m "${commitMessage}" then push ${targetBranch} manually.`);
     process.exit(status);
   }
 
-  // Push develop
-  console.log("🚀 Pushing develop to remote...");
-  execSync("git push origin develop", { stdio: "inherit" });
+  console.log(`🚀 Pushing ${targetBranch} to remote...`);
+  execSync(`git push origin ${targetBranch}`, { stdio: "inherit" });
 
   // Delete feature branch locally
   console.log(`🗑️  Deleting local branch '${featureBranch}'...`);
@@ -138,136 +127,44 @@ function promoteFeatureToDevelop(featureBranch: string, commitMessage: string): 
     console.error(`⚠️  Warning: Could not delete remote branch '${featureBranch}': ${error}`);
   }
 
-  console.log("🎉 Feature branch successfully promoted to develop!");
+  console.log(`🎉 Feature branch successfully promoted to ${targetBranch}!`);
 }
 
 // --------------------
-// Feature -> Main (when no develop branch exists)
+// Integration Branch -> Next Integration Branch
 // --------------------
-function promoteFeatureToMain(featureBranch: string, commitMessage: string): void {
-  console.log(`🚀 Promoting feature branch '${featureBranch}' directly to main (no develop branch present) ...`);
+function promoteBranchForward(sourceBranch: string, targetBranch: string): void {
+  console.log(`🚀 Promoting ${sourceBranch} to ${targetBranch} (fast-forward only)...`);
 
-  if (!commitMessage) {
-    console.error("❌ Error: Commit message is required when promoting a feature branch.");
-    console.error('💡 Usage: git promote "feat: add amazing thing"');
-    process.exit(1);
-  }
+  console.log(`🔄 Updating ${sourceBranch} and ${targetBranch} branches...`);
+  updateCheckedOutBranch(sourceBranch);
+  ensureLocalBranchRef(targetBranch);
 
-  ensureCleanWorkingTree();
-
-  // Update main (fetch latest into local before switching)
-  console.log("🔄 Fetching latest main branch...");
+  console.log(`🔍 Ensuring ${sourceBranch} is up-to-date with ${targetBranch}...`);
   try {
-    execSync("git fetch origin main:main", { stdio: "inherit" });
+    execSync(`git merge ${targetBranch} --ff-only`, { stdio: "inherit" });
   } catch (error) {
-    console.error("❌ Error: Could not fetch main branch.");
-    console.error("💡 Ensure 'main' exists on remote or locally.");
-    process.exit(1);
-  }
-
-  // Ensure main is ancestor of feature branch
-  console.log("🔍 Checking that main is contained in feature branch...");
-  if (!isAncestor("main", featureBranch)) {
-    console.warn("⚠️  Warning: main has commits not present in your feature branch.");
-    console.warn("💡 Proceeding with squash merge; if conflicts arise, resolve them and commit manually.");
-  }
-
-  // Switch to main
-  console.log("🔀 Switching to main branch...");
-  execSync("git checkout main", { stdio: "inherit" });
-  console.log("🔄 Pulling latest main from remote...");
-  execSync("git pull origin main", { stdio: "inherit" });
-
-  // Perform squash merge
-  console.log(`🔄 Squash merging '${featureBranch}' into main...`);
-  try {
-    execSync(`git merge ${featureBranch} --no-commit --squash`, { stdio: "inherit" });
-  } catch (error) {
-    console.error("❌ Error: Squash merge failed.");
-    console.error("💡 Resolve any conflicts, then run the same git merge command manually and commit.");
-    process.exit(1);
-  }
-
-  // Commit
-  console.log("📝 Creating squash commit...");
-  try {
-    execSync(`git commit -m "${escapeForShell(commitMessage)}"`, { stdio: "inherit" });
-  } catch (error: any) {
-    const status = error?.status ?? 1;
-    console.error("❌ git commit failed (likely pre-commit hook). Output above.");
-    console.error("💡 Fix the issue and run: git commit -m \"" + commitMessage + "\" then push main manually.");
-    process.exit(status);
-  }
-
-  // Push main
-  console.log("🚀 Pushing main to remote...");
-  execSync("git push origin main", { stdio: "inherit" });
-
-  // Delete feature branch locally
-  console.log(`🗑️  Deleting local branch '${featureBranch}'...`);
-  try {
-    execSync(`git branch -D ${featureBranch}`, { stdio: "inherit" });
-  } catch (error) {
-    console.error(`⚠️  Warning: Could not delete local branch '${featureBranch}': ${error}`);
-  }
-
-  // Delete remote branch if exists
-  console.log(`🗑️  Attempting to delete remote branch '${featureBranch}' (if it exists)...`);
-  try {
-    const existsRemote = branchExistsOnRemote(featureBranch);
-    if (existsRemote) {
-      execSync(`git push --delete origin ${featureBranch}`, { stdio: "inherit" });
-      console.log("✅ Remote branch deleted.");
-    } else {
-      console.log("ℹ️  Remote branch not found (nothing to delete).");
-    }
-  } catch (error) {
-    console.error(`⚠️  Warning: Could not delete remote branch '${featureBranch}': ${error}`);
-  }
-
-  console.log("🎉 Feature branch successfully promoted directly to main!");
-}
-
-// --------------------
-// Develop -> Main
-// --------------------
-function promoteDevelopToMain(): void {
-  console.log("🚀 Promoting develop to main (fast-forward only)...");
-
-  // First update both branches to ensure we have the latest changes
-  console.log("🔄 Updating develop and main branches...");
-  updateDevelop();
-  execSync("git fetch origin main:main", { stdio: "inherit" });
-
-  // Ensure develop is up-to-date with main
-  console.log("🔍 Ensuring develop is up-to-date with main...");
-  try {
-    execSync("git merge main --ff-only", { stdio: "inherit" });
-  } catch (error) {
-    console.error("❌ Error: Could not fast-forward develop to main.");
-    console.error("⚠️  This means develop has diverged from main.");
+    console.error(`❌ Error: Could not fast-forward '${sourceBranch}' against '${targetBranch}'.`);
+    console.error(`⚠️  This means '${sourceBranch}' has diverged from '${targetBranch}'.`);
     console.error("💡 Please resolve any divergence before attempting to promote.");
     process.exit(1);
   }
 
-  // Switch to main
-  console.log("🔀 Switching to main branch...");
-  execSync("git checkout main", { stdio: "inherit" });
-  execSync("git pull origin main", { stdio: "inherit" });
+  console.log(`🔀 Switching to ${targetBranch} branch...`);
+  execSync(`git checkout ${targetBranch}`, { stdio: "inherit" });
+  updateCheckedOutBranch(targetBranch);
 
-  // Attempt to merge develop into main with --ff-only
-  console.log("🔄 Attempting to merge develop into main...");
+  console.log(`🔄 Attempting to merge ${sourceBranch} into ${targetBranch}...`);
   try {
-    execSync("git merge develop --ff-only", { stdio: "inherit" });
-    console.log("✅  Successfully merged develop into main!");
+    execSync(`git merge ${sourceBranch} --ff-only`, { stdio: "inherit" });
+    console.log(`✅ Successfully merged ${sourceBranch} into ${targetBranch}!`);
 
-    // Push changes to remote main branch
-    console.log("🚀 Pushing changes to remote main branch...");
-    execSync("git push origin main", { stdio: "inherit" });
-    console.log("🎉 Successfully pushed changes to main!");
+    console.log(`🚀 Pushing changes to remote ${targetBranch} branch...`);
+    execSync(`git push origin ${targetBranch}`, { stdio: "inherit" });
+    console.log(`🎉 Successfully pushed changes to ${targetBranch}!`);
   } catch (error) {
-    console.error("❌ Error: Could not fast-forward main to develop.");
-    console.error("⚠️  This usually means that main has diverged from develop.");
+    console.error(`❌ Error: Could not fast-forward '${targetBranch}' to '${sourceBranch}'.`);
+    console.error(`⚠️  This usually means '${targetBranch}' has diverged from '${sourceBranch}'.`);
     console.error("💡 Please resolve any divergence before attempting to promote.");
     process.exit(1);
   }
@@ -280,13 +177,36 @@ function getCurrentBranch(): string {
   return execSync("git rev-parse --abbrev-ref HEAD", { encoding: "utf-8" }).trim();
 }
 
-function updateDevelop(): void {
-  execSync("git pull origin develop", { stdio: "inherit" });
+function ensureLocalBranchRef(branch: string): void {
+  if (branchExistsOnRemote(branch)) {
+    console.log(`🔄 Fetching latest ${branch} branch...`);
+    try {
+      execSync(`git fetch origin ${branch}:${branch}`, { stdio: "inherit" });
+      return;
+    } catch (error) {
+      console.error(`❌ Error: Could not fetch ${branch} branch.`);
+      console.error(`💡 Ensure '${branch}' exists on remote or locally.`);
+      process.exit(1);
+    }
+  }
+
+  if (branchExistsLocal(branch)) {
+    console.log(`ℹ️  Using local '${branch}' branch (no remote branch found).`);
+    return;
+  }
+
+  console.error(`❌ Error: Could not find '${branch}' locally or on remote.`);
+  process.exit(1);
 }
 
-function isFeatureBranch(branch: string): boolean {
-  // Heuristic: anything that's not main/develop considered a feature branch
-  return branch !== "main" && branch !== "develop";
+function updateCheckedOutBranch(branch: string): void {
+  if (branchExistsOnRemote(branch)) {
+    console.log(`🔄 Pulling latest ${branch} from remote...`);
+    execSync(`git pull origin ${branch}`, { stdio: "inherit" });
+    return;
+  }
+
+  console.log(`ℹ️  Skipping pull for '${branch}' because no remote branch exists.`);
 }
 
 function ensureCleanWorkingTree(): void {
@@ -302,24 +222,6 @@ function ensureCleanWorkingTree(): void {
 function isAncestor(ancestor: string, descendant: string): boolean {
   try {
     execSync(`git merge-base --is-ancestor ${ancestor} ${descendant}`);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function branchExistsOnRemote(branch: string): boolean {
-  try {
-    const out = execSync(`git ls-remote --heads origin ${branch}`, { encoding: "utf-8", stdio: "pipe" }).trim();
-    return out.length > 0;
-  } catch {
-    return false;
-  }
-}
-
-function branchExistsLocal(branch: string): boolean {
-  try {
-    execSync(`git show-ref --verify --quiet refs/heads/${branch}`);
     return true;
   } catch {
     return false;

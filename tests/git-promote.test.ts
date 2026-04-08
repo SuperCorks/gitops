@@ -65,6 +65,46 @@ describe('git promote', () => {
     expect(lastMessage(repo, 'main')).toBe('feat: advance develop');
   });
 
+  it('develop -> staging fast-forwards and pushes staging when staging exists', () => {
+    const repo = initRepo(undefined, 'develop');
+    addOrigin(repo);
+
+    run('git', ['branch', 'staging'], repo);
+    run('git', ['branch', 'main'], repo);
+    run('git', ['push', '-u', 'origin', 'develop'], repo);
+    run('git', ['push', '-u', 'origin', 'staging'], repo);
+    run('git', ['push', '-u', 'origin', 'main'], repo);
+
+    createAndCheckoutBranch(repo, 'develop');
+    write(repo, 'develop-to-staging.txt', 'advance');
+    run('git', ['add', '.'], repo);
+    run('git', ['commit', '-m', 'feat: advance develop to staging'], repo);
+    run('git', ['push', 'origin', 'develop'], repo);
+
+    const res = runPromote(repo);
+    expect(res.status).toBe(0);
+    expect(lastMessage(repo, 'staging')).toBe('feat: advance develop to staging');
+  });
+
+  it('staging -> main fast-forwards and pushes main', () => {
+    const repo = initRepo(undefined, 'staging');
+    addOrigin(repo);
+
+    run('git', ['branch', 'main'], repo);
+    run('git', ['push', '-u', 'origin', 'staging'], repo);
+    run('git', ['push', '-u', 'origin', 'main'], repo);
+
+    createAndCheckoutBranch(repo, 'staging');
+    write(repo, 'staging.txt', 'advance');
+    run('git', ['add', '.'], repo);
+    run('git', ['commit', '-m', 'feat: advance staging'], repo);
+    run('git', ['push', 'origin', 'staging'], repo);
+
+    const res = runPromote(repo);
+    expect(res.status).toBe(0);
+    expect(lastMessage(repo, 'main')).toBe('feat: advance staging');
+  });
+
   it('feature -> develop when develop exists only on remote', () => {
     // Create repo and remote
     const repo = initRepo();
@@ -116,6 +156,26 @@ describe('git promote', () => {
     // Should be on main now and have the squash message
     expect(currentBranch(repo)).toBe('main');
     expect(lastMessage(repo, 'main')).toBe('feat: squash to main');
+  });
+
+  it('feature -> staging when staging exists and develop does not', () => {
+    const repo = initRepo(undefined, 'main');
+    addOrigin(repo);
+
+    run('git', ['branch', 'staging'], repo);
+    run('git', ['push', '-u', 'origin', 'main'], repo);
+    run('git', ['push', '-u', 'origin', 'staging'], repo);
+
+    createAndCheckoutBranch(repo, 'feat/staging-only');
+    write(repo, 'staging-only.txt', 'feature');
+    run('git', ['add', '.'], repo);
+    run('git', ['commit', '-m', 'feat: staging only'], repo);
+    run('git', ['push', '-u', 'origin', 'feat/staging-only'], repo);
+
+    const res = runPromote(repo, ['feat: squash to staging']);
+    expect(res.status).toBe(0);
+    expect(currentBranch(repo)).toBe('staging');
+    expect(lastMessage(repo, 'staging')).toBe('feat: squash to staging');
   });
 
   it('errors if working tree is dirty on feature branch', () => {

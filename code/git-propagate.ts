@@ -4,91 +4,86 @@ import { execSync } from "child_process";
 import * as readline from "readline";
 import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
+import {
+  branchExistsLocal,
+  branchExistsOnRemote,
+  getNextPropagationTarget,
+  isIntegrationBranch,
+} from "./branch-flow";
 
 // Argument parsing / help
 yargs(hideBin(process.argv))
   .usage(
     "Usage: git propagate\n\n" +
-      "From main: fast-forward propagate to develop. From develop: interactively merge into other branches.\n" +
-      "If no 'develop' branch exists (locally or remote), running on main will interactively propagate main to feature branches."
+      "From main: fast-forward propagate to staging or develop when present. From staging/develop: continue propagating downstream.\n" +
+      "If there is no lower integration branch available, the current branch is interactively propagated to feature branches."
   )
   .help()
   .alias("help", "h")
   .parseSync();
 
 // This script helps propagate changes between branches:
-// 1. From main -> develop (fast-forward only)
-// 2. From develop -> other branches (with user confirmation for each branch)
+// 1. main -> staging -> develop (fast-forward only, skipping missing branches)
+// 2. lowest available integration branch -> feature branches (with user confirmation for each branch)
 
 async function main() {
   const currentBranch = getCurrentBranch();
-  
-  if (currentBranch === "main") {
-    const hasDevelopLocal = branchExistsLocal("develop");
-    const hasDevelopRemote = branchExistsOnRemote("develop");
-    if (!hasDevelopLocal && !hasDevelopRemote) {
-      console.log("ℹ️  No 'develop' branch detected locally or on remote. Propagating from 'main' directly to feature branches.");
-      await propagateSourceToOtherBranches("main");
-    } else {
-      await propagateMainToDevelop();
-    }
-  } else if (currentBranch === "develop") {
-    await propagateDevelopToOtherBranches();
-  } else {
-    console.error("❌ Error: git propagate must be run from either main or develop branch");
+
+  if (!isIntegrationBranch(currentBranch)) {
+    console.error("❌ Error: git propagate must be run from main, staging, or develop");
     console.error(`🌿 Current branch: ${currentBranch}`);
     process.exit(1);
   }
+
+  const targetBranch = getNextPropagationTarget(currentBranch);
+  if (targetBranch) {
+    await propagateIntegrationBranch(currentBranch, targetBranch);
+    return;
+  }
+
+  console.log(`ℹ️  No lower integration branch detected below '${currentBranch}'. Propagating directly to feature branches.`);
+  await propagateSourceToOtherBranches(currentBranch);
 }
 
-async function propagateMainToDevelop(): Promise<void> {
-  console.log("🔄 Propagating changes from main to develop...");
-  
-  // Update main branch
-  console.log("🔄 Updating main branch...");
-  execSync("git pull origin main", { stdio: "inherit" });
-  
-  // Fetch and update develop
-  console.log("🔄 Fetching and updating develop branch...");
-  execSync("git fetch origin develop:develop", { stdio: "inherit" });
-  
-  // Switch to develop
-  console.log("🔀 Switching to develop branch...");
-  execSync("git checkout develop", { stdio: "inherit" });
-  execSync("git pull origin develop", { stdio: "inherit" });
-  
-  // Attempt to merge main into develop with --ff-only
-  console.log("🔄 Attempting to merge main into develop (fast-forward only)...");
+async function propagateIntegrationBranch(sourceBranch: string, targetBranch: string): Promise<void> {
+  console.log(`🔄 Propagating changes from ${sourceBranch} to ${targetBranch}...`);
+
+  console.log(`🔄 Updating ${sourceBranch} branch...`);
+  updateCheckedOutBranch(sourceBranch);
+
+  console.log(`🔄 Fetching and updating ${targetBranch} branch...`);
+  ensureLocalBranchRef(targetBranch);
+
+  console.log(`🔀 Switching to ${targetBranch} branch...`);
+  execSync(`git checkout ${targetBranch}`, { stdio: "inherit" });
+  updateCheckedOutBranch(targetBranch);
+
+  console.log(`🔄 Attempting to merge ${sourceBranch} into ${targetBranch} (fast-forward only)...`);
   try {
-    execSync("git merge main --ff-only", { stdio: "inherit" });
-    console.log("✅ Successfully merged main into develop!");
-    
-    // Push changes to remote develop branch
-    console.log("🚀 Pushing changes to remote develop branch...");
-    execSync("git push origin develop", { stdio: "inherit" });
-    console.log("🎉 Successfully pushed changes to develop!");
+    execSync(`git merge ${sourceBranch} --ff-only`, { stdio: "inherit" });
+    console.log(`✅ Successfully merged ${sourceBranch} into ${targetBranch}!`);
+
+    console.log(`🚀 Pushing changes to remote ${targetBranch} branch...`);
+    execSync(`git push origin ${targetBranch}`, { stdio: "inherit" });
+    console.log(`🎉 Successfully pushed changes to ${targetBranch}!`);
   } catch (error) {
-    console.error("❌ Error: Could not fast-forward develop to main.");
-    console.error("⚠️  This means develop has diverged from main.");
+    console.error(`❌ Error: Could not fast-forward '${targetBranch}' to '${sourceBranch}'.`);
+    console.error(`⚠️  This means '${targetBranch}' has diverged from '${sourceBranch}'.`);
     console.error("💡 Please resolve any divergence before attempting to propagate.");
     process.exit(1);
   }
 }
 
-async function propagateDevelopToOtherBranches(): Promise<void> {
-  console.log("🔄 Propagating changes from develop to other branches...");
-  await propagateSourceToOtherBranches("develop");
-}
-
 async function propagateSourceToOtherBranches(sourceBranch: string): Promise<void> {
   // Update source branch
   console.log(`🔄 Updating ${sourceBranch} branch...`);
-  execSync(`git pull origin ${sourceBranch}`, { stdio: "inherit" });
+  updateCheckedOutBranch(sourceBranch);
 
-  // Get all branches except main and develop (and the source itself) & remote refs
+  // Get all branches except integration branches (and the source itself) & remote refs
   const allBranches = getAllBranches();
   const otherBranches = allBranches.filter(branch =>
     branch !== "main" &&
+    branch !== "staging" &&
     branch !== "develop" &&
     branch !== sourceBranch &&
     !branch.startsWith("origin/") &&
@@ -198,22 +193,28 @@ function getAllBranches(): string[] {
     .filter(line => line.length > 0);
 }
 
-function branchExistsOnRemote(branch: string): boolean {
-  try {
-    const out = execSync(`git ls-remote --heads origin ${branch}`, { encoding: "utf-8", stdio: "pipe" }).trim();
-    return out.length > 0;
-  } catch {
-    return false;
+function ensureLocalBranchRef(branch: string): void {
+  if (branchExistsOnRemote(branch)) {
+    execSync(`git fetch origin ${branch}:${branch}`, { stdio: "inherit" });
+    return;
   }
+
+  if (branchExistsLocal(branch)) {
+    console.log(`ℹ️  Using local '${branch}' branch (no remote branch found).`);
+    return;
+  }
+
+  console.error(`❌ Error: Could not find '${branch}' locally or on remote.`);
+  process.exit(1);
 }
 
-function branchExistsLocal(branch: string): boolean {
-  try {
-    execSync(`git show-ref --verify --quiet refs/heads/${branch}`);
-    return true;
-  } catch {
-    return false;
+function updateCheckedOutBranch(branch: string): void {
+  if (branchExistsOnRemote(branch)) {
+    execSync(`git pull origin ${branch}`, { stdio: "inherit" });
+    return;
   }
+
+  console.log(`ℹ️  Skipping pull for '${branch}' because no remote branch exists.`);
 }
 
 // Run the main function

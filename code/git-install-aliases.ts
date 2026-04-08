@@ -42,7 +42,7 @@ const aliases = [
   {
     name: "promote",
     command: "!npx --package @supercorks/gitops git-promote",
-    description: "Promote changes from develop to main"
+    description: "Promote changes up the feature -> develop -> staging -> main chain"
   },
   {
     name: "propagate",

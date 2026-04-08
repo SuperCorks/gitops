@@ -3,7 +3,7 @@ A comprehensive suite of Git operations to streamline your development workflow 
 
 ## Commands
 
-- 🚀 [git promote](#-git-promote) - Safely promote changes upstream from develop to main
+- 🚀 [git promote](#-git-promote) - Safely promote changes up your integration branch chain
 - 🌊 [git propagate](#-git-propagate) - Propagate changes downstream between branches
 - 🧹 [git cleanup](#-git-cleanup) - Remove local branches deleted on remote
 - ✅ [git done](#-git-done) - Streamline cleanup workflow after feature branch merge
@@ -41,63 +41,67 @@ _Note: For other installation methods including local project installation, on-d
 ## Tools Overview
 
 ### 🚀 git promote
-Promote changes between branches in two modes:
+Promote changes between branches using the available integration chain:
 
-1. Feature branch ➜ develop (squash merge)
-2. develop ➜ main (fast-forward only)
+1. Feature branch ➜ develop, staging, or main (squash merge into the nearest available integration branch)
+2. develop ➜ staging or main (fast-forward only)
+3. staging ➜ main (fast-forward only)
 
 **Usage:**
 ```bash
-# From a feature branch (squash merge into develop)
+# From a feature branch (squash merge into the nearest available integration branch)
 git promote "feat: add amazing capability"
 
-# From develop (fast-forward main)
+# From develop or staging (fast-forward the next branch)
 git promote
 ```
 
-**Feature Branch ➜ develop Behavior:**
+**Feature Branch Promotion Behavior:**
 1. Ensures working tree is clean (fails if uncommitted changes)
-2. Updates local develop from origin
-3. Verifies develop isn't ahead of your feature branch (fails with guidance if it is)
-4. Performs: git merge <feature> --no-commit --squash
-5. Commits with the message you provide
-6. Pushes develop
-7. Deletes the local feature branch
-8. Deletes the remote feature branch if it exists
+2. Targets `develop` when present, otherwise `staging`, otherwise `main`
+3. Updates the target branch from origin when available
+4. Verifies the target branch isn't ahead of your feature branch (warns if it is)
+5. Performs: git merge <feature> --no-commit --squash
+6. Commits with the message you provide
+7. Pushes the target branch
+8. Deletes the local feature branch
+9. Deletes the remote feature branch if it exists
 
-Your feature branch history is collapsed into a single semantic commit on develop.
+Your feature branch history is collapsed into a single semantic commit on the nearest available integration branch.
 
-**Develop ➜ main Behavior:**
-- Updates develop and main
-- Ensures develop can fast-forward to main (ensuring no divergence)
-- Fast-forwards main to develop (no merge commits)
-- Pushes main
+**Integration Branch Promotion Behavior:**
+- `develop` fast-forwards into `staging` when `staging` exists, otherwise directly into `main`
+- `staging` fast-forwards into `main`
+- Updates both branches before merging
+- Uses fast-forward-only merges to prevent hidden divergence
+- Pushes the promoted target branch
 
 **Why squash feature branches?**
-- Keeps develop history concise and semantic
+- Keeps integration history concise and semantic
 - Avoids noisy iterative commits
-- Forces synchronization with develop before merging
+- Forces synchronization with the nearest integration branch before merging
 
 **Notes:**
 - Commit message is required when promoting from a feature branch
-- Running from main is not supported (use develop or a feature branch)
-- If develop has new commits you don't have, you must merge/rebase first
+- Running from `main` is not supported
+- `develop` and `staging` are optional; the command skips missing levels automatically
+- If the target integration branch has new commits you don't have, you should merge/rebase first
 
 ### 🌊 git propagate
 Propagate changes between branches with two distinct modes based on your current branch.
 
 **Usage:**
 ```bash
-git propagate  # From main: propagate to develop (fast-forward only)
-git propagate  # From develop: propagate to other branches (with confirmation)
+git propagate  # From main/staging/develop: propagate to the next branch in the chain
+git propagate  # From the lowest available integration branch: propagate to feature branches
 ```
 
 **Features:**
-- **From main → develop**: Fast-forward only merge to maintain clean history
-- **From develop → other branches**: Interactive mode with user confirmation for each branch
+- **From main → staging → develop**: Fast-forward only merges, automatically skipping missing branches
+- **From the lowest available integration branch → other branches**: Interactive mode with user confirmation for each branch
 - Automatically updates source and target branches before merging
-- Optional push confirmation for each branch when propagating from develop
-- Skips main and develop branches when propagating from develop
+- Optional push confirmation for each branch when propagating to feature branches
+- Skips `main`, `staging`, and `develop` when propagating to feature branches
 
 ### 🧹 git cleanup
 Remove local branches that have been deleted on the remote to keep your local repository clean.
@@ -251,8 +255,8 @@ These tools are designed to work together in a typical Git flow:
 1. **Development**: Work on feature branches
 2. **Completion**: Use `git done` after your PR is merged and branch deleted
 3. **Maintenance**: Use `git cleanup` regularly to remove stale branches
-4. **Feature Promotion**: Use `git promote` to move changes from develop to main
-5. **Fix Propagation**: Use `git propagate` to spread changes from main to develop or from develop to feature branches
+4. **Feature Promotion**: Use `git promote` to move changes up `feature -> develop -> staging -> main`
+5. **Fix Propagation**: Use `git propagate` to spread changes back down `main -> staging -> develop -> feature branches`
 6. **Release**: Use `git release link` to generate release information or `git release draft` to create a draft
 
 

@@ -32,6 +32,46 @@ describe('git propagate', () => {
     expect(lastCommitMsg(repo, 'develop')).toBe('feat: advance main');
   });
 
+  it('from main -> staging fast-forwards staging to main when staging exists', () => {
+    const repo = initRepo(undefined, 'main');
+    addOrigin(repo);
+
+    createAndCheckoutBranch(repo, 'staging');
+    run('git', ['push', '-u', 'origin', 'staging'], repo);
+    createAndCheckoutBranch(repo, 'main');
+    run('git', ['push', '-u', 'origin', 'main'], repo);
+
+    write(repo, 'main-to-staging.txt', 'on main');
+    run('git', ['add', '.'], repo);
+    run('git', ['commit', '-m', 'feat: advance main to staging'], repo);
+    run('git', ['push', 'origin', 'main'], repo);
+
+    const res = runPropagate(repo);
+    expect(res.status).toBe(0);
+
+    expect(lastCommitMsg(repo, 'staging')).toBe('feat: advance main to staging');
+  });
+
+  it('from staging -> develop fast-forwards develop to staging when develop exists', () => {
+    const repo = initRepo(undefined, 'staging');
+    addOrigin(repo);
+
+    createAndCheckoutBranch(repo, 'develop');
+    run('git', ['push', '-u', 'origin', 'develop'], repo);
+    createAndCheckoutBranch(repo, 'staging');
+    run('git', ['push', '-u', 'origin', 'staging'], repo);
+
+    write(repo, 'staging-to-develop.txt', 'on staging');
+    run('git', ['add', '.'], repo);
+    run('git', ['commit', '-m', 'feat: advance staging to develop'], repo);
+    run('git', ['push', 'origin', 'staging'], repo);
+
+    const res = runPropagate(repo);
+    expect(res.status).toBe(0);
+
+    expect(lastCommitMsg(repo, 'develop')).toBe('feat: advance staging to develop');
+  });
+
   it('from develop -> other branches: merges selected branches and optionally pushes', () => {
     const repo = initRepo(undefined, 'develop');
     const remote = addOrigin(repo);
@@ -74,6 +114,40 @@ describe('git propagate', () => {
     run('git', ['checkout', 'feat/two'], repo);
     const listTwo = run('git', ['ls-files'], repo).stdoutStr;
     expect(listTwo).not.toMatch(/develop.txt/);
+  });
+
+  it('from main -> feature branches directly when staging and develop are absent', () => {
+    const repo = initRepo(undefined, 'main');
+    addOrigin(repo);
+    run('git', ['push', '-u', 'origin', 'main'], repo);
+
+    createAndCheckoutBranch(repo, 'feat/direct-one');
+    write(repo, 'one.txt', '1');
+    run('git', ['add', '.'], repo);
+    run('git', ['commit', '-m', 'feat: one'], repo);
+    run('git', ['push', '-u', 'origin', 'feat/direct-one'], repo);
+
+    createAndCheckoutBranch(repo, 'feat/direct-two');
+    write(repo, 'two.txt', '2');
+    run('git', ['add', '.'], repo);
+    run('git', ['commit', '-m', 'feat: two'], repo);
+    run('git', ['push', '-u', 'origin', 'feat/direct-two'], repo);
+
+    createAndCheckoutBranch(repo, 'main');
+    write(repo, 'main.txt', 'M');
+    run('git', ['add', '.'], repo);
+    run('git', ['commit', '-m', 'fix: main hotfix'], repo);
+    run('git', ['push', 'origin', 'main'], repo);
+
+    const input = 'y\n' + 'n\n' + 'n\n';
+    const res = runPropagate(repo, [], input);
+    expect(res.status).toBe(0);
+
+    run('git', ['checkout', 'feat/direct-one'], repo);
+    expect(run('git', ['ls-files'], repo).stdoutStr).toMatch(/main.txt/);
+
+    run('git', ['checkout', 'feat/direct-two'], repo);
+    expect(run('git', ['ls-files'], repo).stdoutStr).not.toMatch(/main.txt/);
   });
 
   // Note: conflict scenarios can be environment-dependent; covered by merge success path above.
