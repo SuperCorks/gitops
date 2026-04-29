@@ -36,47 +36,48 @@ const argv = yargs(hideBin(process.argv))
 // Determine scope
 const scope = argv.global ? "--global" : "--local";
 const scopeText = argv.global ? "globally" : "locally";
+const latestPackageCommand = "npx --yes --package @supercorks/gitops@latest";
 
 // Define aliases to install
 const aliases = [
   {
     name: "promote",
-    command: "!npx --package @supercorks/gitops git-promote",
+    command: `!${latestPackageCommand} git-promote`,
     description: "Promote changes up the feature -> develop -> staging -> main chain"
   },
   {
     name: "propagate",
-    command: "!npx --package @supercorks/gitops git-propagate",
+    command: `!${latestPackageCommand} git-propagate`,
     description: "Propagate changes between branches"
   },
   {
     name: "cleanup", 
-    command: "!npx --package @supercorks/gitops git-cleanup",
+    command: `!${latestPackageCommand} git-cleanup`,
     description: "Remove stale local branches"
   },
   {
     name: "done",
-    command: "!npx --package @supercorks/gitops git-done", 
+    command: `!${latestPackageCommand} git-done`,
     description: "Complete feature branch workflow"
   },
   {
     name: "release",
-    command: "!npx --package @supercorks/gitops git-release",
+    command: `!${latestPackageCommand} git-release`,
     description: "Release management (link, draft)"
   },
   {
     name: "wip",
-  command: "!npx --package @supercorks/gitops git-wip",
-  description: "Create a WIP commit and optionally push (use --no-push to skip)"
+    command: `!${latestPackageCommand} git-wip`,
+    description: "Create a WIP commit and optionally push (use --no-push to skip)"
   },
   {
     name: "acp",
-    command: "!npx --package @supercorks/gitops git-acp",
+    command: `!${latestPackageCommand} git-acp`,
     description: "Add, commit (message required), and push changes (prompts on main)"
   },
   {
     name: "feat",
-    command: "!npx --package @supercorks/gitops git-feat",
+    command: `!${latestPackageCommand} git-feat`,
     description: "Create a semantic feature branch from develop or main"
   }
 ];

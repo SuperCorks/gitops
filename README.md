@@ -382,14 +382,14 @@ Add aliases to your Git config manually:
 
 ```bash
 # For npx users (most compatible)
-git config --global alias.promote '!npx --package @supercorks/gitops git-promote'
-git config --global alias.propagate '!npx --package @supercorks/gitops git-propagate'
-git config --global alias.cleanup '!npx --package @supercorks/gitops git-cleanup'
-git config --global alias.done '!npx --package @supercorks/gitops git-done'
-git config --global alias.release '!npx --package @supercorks/gitops git-release'
-git config --global alias.wip '!npx --package @supercorks/gitops git-wip'
-git config --global alias.acp '!npx --package @supercorks/gitops git-acp'
-git config --global alias.feat '!npx --package @supercorks/gitops git-feat'
+git config --global alias.promote '!npx --yes --package @supercorks/gitops@latest git-promote'
+git config --global alias.propagate '!npx --yes --package @supercorks/gitops@latest git-propagate'
+git config --global alias.cleanup '!npx --yes --package @supercorks/gitops@latest git-cleanup'
+git config --global alias.done '!npx --yes --package @supercorks/gitops@latest git-done'
+git config --global alias.release '!npx --yes --package @supercorks/gitops@latest git-release'
+git config --global alias.wip '!npx --yes --package @supercorks/gitops@latest git-wip'
+git config --global alias.acp '!npx --yes --package @supercorks/gitops@latest git-acp'
+git config --global alias.feat '!npx --yes --package @supercorks/gitops@latest git-feat'
 
 # For local/global installation users (shorter)
 git config --global alias.promote '!npx git-promote'

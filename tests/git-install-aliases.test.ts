@@ -11,13 +11,13 @@ describe('git-install-aliases', () => {
 
     // Verify several aliases exist
     const wip = run('git', ['config', '--local', '--get', 'alias.wip'], repo).stdoutStr.trim();
-    expect(wip).toContain('npx --package @supercorks/gitops git-wip');
+    expect(wip).toContain('npx --yes --package @supercorks/gitops@latest git-wip');
 
     const acp = run('git', ['config', '--local', '--get', 'alias.acp'], repo).stdoutStr.trim();
-    expect(acp).toContain('npx --package @supercorks/gitops git-acp');
+    expect(acp).toContain('npx --yes --package @supercorks/gitops@latest git-acp');
 
     const release = run('git', ['config', '--local', '--get', 'alias.release'], repo).stdoutStr.trim();
-    expect(release).toContain('npx --package @supercorks/gitops git-release');
+    expect(release).toContain('npx --yes --package @supercorks/gitops@latest git-release');
 
     const legacyReleaseNotes = run('git', ['config', '--local', '--get', 'alias.release-notes'], repo).stdoutStr.trim();
     expect(legacyReleaseNotes).toBe('');
